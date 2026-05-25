@@ -15,7 +15,7 @@
     .nav-btn:active { transform: scale(0.9); }
 
     #status-msg { text-align: center; color: #666; margin-bottom: 10px; font-weight: bold; }
-    .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .grid-container { display: grid; grid-template-columns: repeat(1, 1fr); gap: 8px; margin-top: 10px; }
     .parking-space {
       padding: 10px 5px; text-align: center; border-radius: 8px; font-weight: bold;
       cursor: pointer; border: 1px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s;
@@ -134,15 +134,15 @@
         
         if (space.Status === "空位" || space.Status === "") {
           div.classList.add('status-empty');
-          div.innerHTML = `<span style="font-size:18px;">${space.SpaceID}</span><br><small style="color:#666;">空位</small>`;
+          div.innerHTML = `<span style="font-size:24px;">${space.SpaceID}</span><br><small style="color:#666;">空位</small>`;
         } else {
           div.classList.add('status-occupied');
           var displayName = space.Name ? space.Name : "未填寫";
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
           div.innerHTML = `
-            <span style="font-size:16px;">${space.SpaceID}</span><br>
-            <span style="font-size:14px;">${displayName}</span><br>
-            <span style="font-size:11px; opacity:0.8;">${displayPlate}</span>
+            <span style="font-size:24px;">${space.SpaceID}</span><br>
+            <span style="font-size:26px;">${displayName}</span><br>
+            <span style="font-size:16px; opacity:0.8;">${displayPlate}</span>
           `;
         }
 
