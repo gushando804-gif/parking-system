@@ -17,7 +17,7 @@
     #status-msg { text-align: center; color: #666; margin-bottom: 10px; font-weight: bold; font-size: 16px; }
     
     /* 1 列 3 格設定 */
-    .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+    .grid-container { display: grid; grid-template-columns: repeat(1, 1fr); gap: 10px; margin-top: 10px; }
     
     .parking-space {
       padding: 0; /* 移除內邊距，讓內部線條貼齊邊緣 */
@@ -45,10 +45,10 @@
     }
     .space-row-bottom {
       display: flex; justify-content: center; align-items: center;
-      padding: 6px 2px; font-size: 16px; flex: 1;
+      padding: 6px 2px; font-size: 24px; flex: 1;
     }
-    .info-name { font-size: 18px; }
-    .info-plate { font-size: 14px; opacity: 0.8; }
+    .info-name { font-size: 26px; }
+    .info-plate { font-size: 24px; opacity: 0.8; }
 
     /* 彈出視窗 (Modal) 的精美樣式 */
     .modal {
@@ -165,7 +165,7 @@
             <div class="space-layout">
               <div class="space-id">${space.SpaceID}</div>
               <div class="space-info" style="justify-content: center;">
-                <span style="font-size: 18px; color: #666;">空位</span>
+                <span style="font-size: 24px; color: #666;">空位</span>
               </div>
             </div>
           `;
