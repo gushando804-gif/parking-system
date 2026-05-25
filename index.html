@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
@@ -40,8 +40,87 @@
   <div id="parking-grid" class="grid-container"></div>
 
   <script>
-    // ⚠️ 請務必把這兩行換成你自己的資料！ ⚠️
+    // 你的專屬設定 (我已經幫你填好了！)
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbx1MvkzdM0plS-PWI2AiQtUDUOZ_WGhoeEfIbJBsrFMqI159px3Gwnh5olvBuchx4cnxQ/exec";
 
-    //
+    // 系統初始化
+    async function initializeApp() {
+      try {
+        document.getElementById('status-msg').innerText = "LIFF 初始化中...";
+        await liff.init({ liffId: MY_LIFF_ID });
+        
+        document.getElementById('status-msg').style.display = 'block';
+        document.getElementById('status-msg').innerText = "資料讀取中...";
+        
+        // 向 GAS 請求資料
+        const response = await fetch(MY_GAS_URL);
+        const data = await response.json();
+        
+        renderGrid(data);
+      } catch (err) {
+        document.getElementById('status-msg').innerText = "載入失敗：" + err;
+      }
+    }
+
+    // 畫出車位網格
+    function renderGrid(data) {
+      const grid = document.getElementById('parking-grid');
+      grid.innerHTML = ''; // 清空畫面
+      
+      data.forEach(space => {
+        const div = document.createElement('div');
+        div.className = 'parking-space';
+        
+        // 判斷狀態給予顏色與內容
+        if (space.Status === "空位" || space.Status === "") {
+          div.classList.add('status-empty');
+          div.innerHTML = `<span style="font-size:18px;">${space.SpaceID}</span><br><small style="color:#666;">空位</small>`;
+        } else {
+          div.classList.add('status-occupied');
+          var displayName = space.Name ? space.Name : "未載入";
+          var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
+          div.innerHTML = `
+            <span style="font-size:16px;">${space.SpaceID}</span><br>
+            <span style="font-size:14px;">${displayName}</span><br>
+            <span style="font-size:11px; opacity:0.8;">${displayPlate}</span>
+          `;
+        }
+
+        // 幫每個格子加上點擊事件
+        div.onclick = function() {
+          handleSpaceClick(space);
+        };
+        
+        grid.appendChild(div);
+      });
+      document.getElementById('status-msg').style.display = 'none';
+    }
+
+    // 處理點擊車位的邏輯
+    function handleSpaceClick(space) {
+      if (space.Status === "空位" || space.Status === "") {
+        let confirmRent = confirm(`要將車位 ${space.SpaceID} 設為「出租中」嗎？\n(請先確認 Customers 表已有該客戶資料)`);
+        if (confirmRent) {
+          sendUpdateRequest(space.SpaceID, 'rent');
+        }
+      } else {
+        let confirmLeave = confirm(`車位 ${space.SpaceID} (${space.Name}) 目前出租中。\n\n確定要「退租」並清空此車位嗎？\n(若要換位置，請先退租再點擊新空位)`);
+        if (confirmLeave) {
+          sendUpdateRequest(space.SpaceID, 'leave');
+        }
+      }
+    }
+
+    // 發送修改指令給後端 GAS
+    async function sendUpdateRequest(spaceId, action) {
+      document.getElementById('status-msg').style.display = 'block';
+      document.getElementById('status-msg').innerText = "資料更新中，請稍候...";
+
+      var payload = { action: action, spaceId: spaceId };
+
+      try {
+        const response = await fetch(MY_GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
