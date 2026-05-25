@@ -83,7 +83,7 @@
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // ⚠️ 請務必在下一行，貼上你剛剛正常運作的 GAS 網址！ ⚠️
+    // 你的專屬 GAS 網址 (已經幫你填好囉！)
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbyS35nSYJkVSVjEp4ZPkBT8o3lNQd-ARQO8BVjOVXwfqDOtbS8-QckDHyBxaAtxC4MN/exec";
 
     // 控制年月變數
@@ -136,4 +136,97 @@
           div.classList.add('status-empty');
           div.innerHTML = `<span style="font-size:18px;">${space.SpaceID}</span><br><small style="color:#666;">空位</small>`;
         } else {
-          div.classList.add('status-occupied
+          div.classList.add('status-occupied');
+          var displayName = space.Name ? space.Name : "未填寫";
+          var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
+          div.innerHTML = `
+            <span style="font-size:16px;">${space.SpaceID}</span><br>
+            <span style="font-size:14px;">${displayName}</span><br>
+            <span style="font-size:11px; opacity:0.8;">${displayPlate}</span>
+          `;
+        }
+
+        div.onclick = function() { openModal(space); };
+        grid.appendChild(div);
+      });
+      document.getElementById('status-msg').style.display = 'none';
+    }
+
+    function openModal(space) {
+      document.getElementById('modal-spaceId').value = space.SpaceID;
+      document.getElementById('modal-title').innerText = `管理車位：${space.SpaceID} 號`;
+      document.getElementById('modal-name').value = space.Name || "";
+      document.getElementById('modal-plate').value = space.LicensePlate || "";
+      document.getElementById('modal-phone').value = space.Phone || "";
+
+      if (space.Status === "空位" || space.Status === "") {
+        document.getElementById('btn-leave').style.display = 'none';
+        document.getElementById('btn-save').innerText = '確定出租';
+      } else {
+        document.getElementById('btn-leave').style.display = 'inline-block';
+        document.getElementById('btn-save').innerText = '儲存修改';
+      }
+      document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    function saveData() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      var name = document.getElementById('modal-name').value;
+      var phone = document.getElementById('modal-phone').value;
+      var plate = document.getElementById('modal-plate').value;
+      
+      if (!name) { alert("請至少輸入姓名！"); return; }
+      closeModal();
+      sendUpdateRequest(spaceId, 'update', name, phone, plate);
+    }
+
+    function leaveSpace() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      if(confirm(`確定要將 ${spaceId} 號車位退租，並清空客戶資料嗎？`)) {
+        closeModal();
+        sendUpdateRequest(spaceId, 'leave', '', '', '');
+      }
+    }
+
+    async function sendUpdateRequest(spaceId, action, name, phone, plate) {
+      document.getElementById('status-msg').style.display = 'block';
+      document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
+
+      var payload = { 
+        action: action, 
+        spaceId: spaceId, 
+        name: name, 
+        phone: phone, 
+        plate: plate, 
+        period: getPeriodString() 
+      };
+
+      try {
+        const response = await fetch(MY_GAS_URL, {
+          redirect: "follow",
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        
+        if(result.status === 'success') {
+          alert(result.msg);
+          initializeApp(); 
+        } else {
+          alert("錯誤：" + result.msg);
+          document.getElementById('status-msg').style.display = 'none';
+        }
+      } catch (err) {
+        alert("連線失敗：" + err);
+        document.getElementById('status-msg').style.display = 'none';
+      }
+    }
+
+    initializeApp();
+  </script>
+</body>
+</html>
