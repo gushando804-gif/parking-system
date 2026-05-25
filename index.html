@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>珠靈殿停車管理系統</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 10px; }
+    h2 { text-align: center; }
+    /* 設定 40 個車位的網格排版 (預設一排 4 格) */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .parking-space {
+      padding: 15px 5px;
+      text-align: center;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      border: 1px solid #ccc;
+    }
+    /* 顏色狀態 */
+    .status-empty { background-color: #d4edda; color: #155724; } /* 綠色：空位 */
+    .status-occupied { background-color: #f8d7da; color: #721c24; } /* 紅色：出租中 */
+  </style>
+</head>
+<body>
+
+  <h2>車位總覽圖</h2>
+  <div id="status-msg">系統載入中，請稍候...</div>
+  <div id="parking-grid" class="grid-container"></div>
+
+  <script>
+    // ⚠️ 請在這裡填入你剛剛取得的兩組重要資料 ⚠️
+    const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
+    const MY_GAS_URL = "https://liff.line.me/2010181007-eMKJGt2N";
+
+    async function initializeApp() {
+      try {
+        // 1. 初始化 LIFF
+        await liff.init({ liffId: MY_LIFF_ID });
+        
+        // 2. 向 GAS 請求車位資料
+        document.getElementById('status-msg').innerText = "資料讀取中...";
+        const response = await fetch(MY_GAS_URL);
+        const data = await response.json();
+        
+        // 3. 畫出 40 個格子
+        renderGrid(data);
+      } catch (err) {
+        document.getElementById('status-msg').innerText = "載入失敗：" + err;
+      }
+    }
+
+    function renderGrid(data) {
+      const grid = document.getElementById('parking-grid');
+      grid.innerHTML = ''; // 清空畫面
+      
+      data.forEach(space => {
+        const div = document.createElement('div');
+        div.className = 'parking-space';
+        
+        // 判斷狀態給予顏色
+        if (space.Status === "空位" || space.Status === "") {
+          div.classList.add('status-empty');
+          div.innerHTML = `${space.SpaceID}<br><small>空位</small>`;
+        } else {
+          div.classList.add('status-occupied');
+          // 先簡單顯示有租客，後續再加入權限判斷顯示詳細個資
+          div.innerHTML = `${space.SpaceID}<br><small>已出租</small>`; 
+        }
+        
+        grid.appendChild(div);
+      });
+      document.getElementById('status-msg').style.display = 'none';
+    }
+
+    // 網頁載入後執行
+    initializeApp();
+  </script>
+
+</body>
+</html>
