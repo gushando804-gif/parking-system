@@ -9,28 +9,33 @@
     body { font-family: sans-serif; padding: 10px; background-color: #f4f4f9; }
     h2 { text-align: center; color: #333; }
     #status-msg { text-align: center; color: #666; margin-bottom: 10px; font-weight: bold; }
-    /* 設定 40 個車位的網格排版 */
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 10px;
-    }
+    .grid-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
     .parking-space {
-      padding: 10px 5px;
-      text-align: center;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: transform 0.1s;
+      padding: 10px 5px; text-align: center; border-radius: 8px; font-weight: bold;
+      cursor: pointer; border: 1px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s;
     }
-    /* 點擊時的微小縮放特效 */
     .parking-space:active { transform: scale(0.95); }
-    /* 顏色狀態 */
     .status-empty { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
     .status-occupied { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } 
+
+    /* 彈出視窗 (Modal) 的精美樣式 */
+    .modal {
+      display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+      background-color: #fff; margin: 20% auto; padding: 20px; border-radius: 12px;
+      width: 80%; max-width: 350px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .modal-content h3 { margin-top: 0; text-align: center; color: #333; }
+    .input-group { margin-bottom: 15px; }
+    .input-group label { display: block; font-size: 14px; margin-bottom: 5px; font-weight: bold;}
+    .input-group input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;}
+    .btn-row { display: flex; justify-content: space-between; margin-top: 20px; }
+    .btn { padding: 10px 15px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; }
+    .btn-save { background-color: #007bff; color: white; flex-grow: 1; margin-right: 10px; }
+    .btn-leave { background-color: #dc3545; color: white; display: none; }
+    .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
   </style>
 </head>
 <body>
@@ -39,46 +44,64 @@
   <div id="status-msg">系統載入中，請稍候...</div>
   <div id="parking-grid" class="grid-container"></div>
 
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3 id="modal-title">車位編輯</h3>
+      <input type="hidden" id="modal-spaceId">
+      
+      <div class="input-group">
+        <label>姓名：</label>
+        <input type="text" id="modal-name" placeholder="請輸入姓名">
+      </div>
+      <div class="input-group">
+        <label>車牌：</label>
+        <input type="text" id="modal-plate" placeholder="請輸入車牌 (選填)">
+      </div>
+      <div class="input-group">
+        <label>電話：</label>
+        <input type="text" id="modal-phone" placeholder="請輸入電話 (選填)">
+      </div>
+      
+      <div class="btn-row">
+        <button class="btn btn-save" id="btn-save" onclick="saveData()">儲存</button>
+        <button class="btn btn-leave" id="btn-leave" onclick="leaveSpace()">退租清空</button>
+        <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // 你的專屬設定 (我已經幫你填好了！)
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
+    // ⚠️ 記得貼上你剛剛可以正常運作的 GAS 網址！
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbyS35nSYJkVSVjEp4ZPkBT8o3lNQd-ARQO8BVjOVXwfqDOtbS8-QckDHyBxaAtxC4MN/exec";
 
-    // 系統初始化
     async function initializeApp() {
       try {
-        document.getElementById('status-msg').innerText = "LIFF 初始化中...";
         await liff.init({ liffId: MY_LIFF_ID });
-        
         document.getElementById('status-msg').style.display = 'block';
         document.getElementById('status-msg').innerText = "資料讀取中...";
-        
-        // 向 GAS 請求資料
         const response = await fetch(MY_GAS_URL);
         const data = await response.json();
-        
         renderGrid(data);
       } catch (err) {
         document.getElementById('status-msg').innerText = "載入失敗：" + err;
       }
     }
 
-    // 畫出車位網格
     function renderGrid(data) {
       const grid = document.getElementById('parking-grid');
-      grid.innerHTML = ''; // 清空畫面
+      grid.innerHTML = ''; 
       
       data.forEach(space => {
         const div = document.createElement('div');
         div.className = 'parking-space';
         
-        // 判斷狀態給予顏色與內容
         if (space.Status === "空位" || space.Status === "") {
           div.classList.add('status-empty');
           div.innerHTML = `<span style="font-size:18px;">${space.SpaceID}</span><br><small style="color:#666;">空位</small>`;
         } else {
           div.classList.add('status-occupied');
-          var displayName = space.Name ? space.Name : "未載入";
+          var displayName = space.Name ? space.Name : "未填寫";
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
           div.innerHTML = `
             <span style="font-size:16px;">${space.SpaceID}</span><br>
@@ -87,49 +110,75 @@
           `;
         }
 
-        // 幫每個格子加上點擊事件
-        div.onclick = function() {
-          handleSpaceClick(space);
-        };
-        
+        // 點擊事件：開啟表單
+        div.onclick = function() { openModal(space); };
         grid.appendChild(div);
       });
       document.getElementById('status-msg').style.display = 'none';
     }
 
-    // 處理點擊車位的邏輯
-    function handleSpaceClick(space) {
+    // ====== 表單彈出視窗控制 ======
+    function openModal(space) {
+      document.getElementById('modal-spaceId').value = space.SpaceID;
+      document.getElementById('modal-title').innerText = `管理車位：${space.SpaceID} 號`;
+      document.getElementById('modal-name').value = space.Name || "";
+      document.getElementById('modal-plate').value = space.LicensePlate || "";
+      document.getElementById('modal-phone').value = space.Phone || "";
+
+      // 如果是空位，隱藏退租按鈕，顯示「確定出租」
       if (space.Status === "空位" || space.Status === "") {
-        let confirmRent = confirm(`要將車位 ${space.SpaceID} 設為「出租中」嗎？\n(請先確認 Customers 表已有該客戶資料)`);
-        if (confirmRent) {
-          sendUpdateRequest(space.SpaceID, 'rent');
-        }
+        document.getElementById('btn-leave').style.display = 'none';
+        document.getElementById('btn-save').innerText = '確定出租';
       } else {
-        let confirmLeave = confirm(`車位 ${space.SpaceID} (${space.Name}) 目前出租中。\n\n確定要「退租」並清空此車位嗎？\n(若要換位置，請先退租再點擊新空位)`);
-        if (confirmLeave) {
-          sendUpdateRequest(space.SpaceID, 'leave');
-        }
+        // 如果已出租，顯示退租按鈕，顯示「儲存修改」
+        document.getElementById('btn-leave').style.display = 'inline-block';
+        document.getElementById('btn-save').innerText = '儲存修改';
+      }
+      document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    function saveData() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      var name = document.getElementById('modal-name').value;
+      var phone = document.getElementById('modal-phone').value;
+      var plate = document.getElementById('modal-plate').value;
+      
+      if (!name) { alert("請至少輸入姓名！"); return; }
+      
+      closeModal();
+      sendUpdateRequest(spaceId, 'update', name, phone, plate);
+    }
+
+    function leaveSpace() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      if(confirm(`確定要將 ${spaceId} 號車位退租，並清空客戶資料嗎？`)) {
+        closeModal();
+        sendUpdateRequest(spaceId, 'leave', '', '', '');
       }
     }
 
-    // 發送修改指令給後端 GAS
-    async function sendUpdateRequest(spaceId, action) {
+    // ====== 發送資料給 GAS ======
+    async function sendUpdateRequest(spaceId, action, name, phone, plate) {
       document.getElementById('status-msg').style.display = 'block';
-      document.getElementById('status-msg').innerText = "資料更新中，請稍候...";
+      document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
 
-      var payload = { action: action, spaceId: spaceId };
+      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate };
 
       try {
         const response = await fetch(MY_GAS_URL, {
+          redirect: "follow",
           method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+          body: JSON.stringify(payload)
         });
         const result = await response.json();
         
         if(result.status === 'success') {
           alert(result.msg);
-          initializeApp(); // 成功後自動重新讀取最新畫面
+          initializeApp(); // 重新讀取畫面
         } else {
           alert("錯誤：" + result.msg);
           document.getElementById('status-msg').style.display = 'none';
@@ -140,7 +189,6 @@
       }
     }
 
-    // 網頁載入後執行
     initializeApp();
   </script>
 </body>
