@@ -64,14 +64,20 @@
         const div = document.createElement('div');
         div.className = 'parking-space';
         
-        // 判斷狀態給予顏色
+        // 判斷狀態給予顏色與內容
         if (space.Status === "空位" || space.Status === "") {
           div.classList.add('status-empty');
-          div.innerHTML = `${space.SpaceID}<br><small>空位</small>`;
+          div.innerHTML = `<span style="font-size:18px;">${space.SpaceID}</span><br><small style="color:#666;">空位</small>`;
         } else {
           div.classList.add('status-occupied');
-          // 先簡單顯示有租客，後續再加入權限判斷顯示詳細個資
-          div.innerHTML = `${space.SpaceID}<br><small>已出租</small>`; 
+          // 顯示車位號、姓名、車牌
+          var displayName = space.Name ? space.Name : "未載入";
+          var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
+          div.innerHTML = `
+            <span style="font-size:16px;">${space.SpaceID}</span><br>
+            <span style="font-size:14px;">${displayName}</span><br>
+            <span style="font-size:11px; opacity:0.8;">${displayPlate}</span>
+          `;
         }
         
         grid.appendChild(div);
