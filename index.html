@@ -13,7 +13,7 @@
     .nav-btn:active { transform: scale(0.9); }
     #status-msg { text-align: center; color: #666; margin-bottom: 10px; font-weight: bold; font-size: 18px; }
     
-    /* 🌟 長輩友善版：手機強制 1 列 1 格，間距拉開防誤觸 */
+    /* 🌟 長輩友善版：手機強制 1 列 1 格 */
     .grid-container { display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; margin-top: 10px; }
     
     .parking-space { padding: 0; text-align: center; border-radius: 12px; font-weight: bold; cursor: pointer; border: 2px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: transform 0.1s; overflow: hidden; }
@@ -21,7 +21,6 @@
     .status-empty { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
     .status-occupied { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } 
     
-    /* 🌟 高度加高，字體全面巨大化 */
     .space-layout { display: flex; height: 100%; min-height: 90px; }
     .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
@@ -32,7 +31,7 @@
     .info-name { font-size: 26px; font-weight: bold; }
     .info-plate { font-size: 18px; opacity: 0.8; margin-left: 10px; text-overflow: ellipsis; }
 
-    /* 🌟 電腦版依然維持多格排版，方便大螢幕總覽 🌟 */
+    /* 電腦版維持大螢幕總覽 */
     @media (min-width: 768px) {
       .grid-container { grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 15px; }
       .space-layout { min-height: 75px; }
@@ -44,7 +43,7 @@
       .parking-space { border-width: 1px; border-radius: 8px; }
     }
 
-    /* 彈出視窗樣式：字體與按鈕也都放大 */
+    /* 彈出視窗樣式 */
     .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
     .modal-content { background-color: #fff; margin: 15% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .modal-content h3 { margin-top: 0; text-align: center; color: #333; font-size: 24px; }
@@ -99,7 +98,7 @@
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
     // ⚠️ 請務必在下一行貼回你最新的 GAS 網址！
-    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbywW1rXufaoFrpdthyOQLG4JDuidrPQiN5XUEcSjzGe496kMVPaHBwF5dIzGzL2M_5ing/exec";
+    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbzfnNiEBM2CG_xYP8dIuYlNuKmTErtndnCyOk_gwWZO6qjewouIX7oLC2GgIlho7kiDHg/exec";
 
     let currentYear = 115;
     let currentMonth = 5; 
@@ -126,9 +125,46 @@
         
         globalCustomers = payload.customers; 
         renderGrid(payload.spaces);          
+        
+        // 🌟 神級功能：發現新帳本自動詢問複製 🌟
+        if (payload.isNewSheet) {
+            // 自動往回推算「上個月」的名稱
+            let prevMonth = currentMonth - 2;
+            let prevYear = currentYear;
+            if (prevMonth < 1) { prevMonth = 11; prevYear--; }
+            let prevPeriodStr = `${prevYear}_${prevMonth}-${prevMonth+1}`;
+            
+            // 跳出對話框詢問
+            if (confirm("💡 系統提示：\n發現這是一個全新月份的空白帳本！\n請問是否要一鍵匯入「上個月 (" + prevMonth + "-" + (prevMonth+1) + "月)」的所有租客資料？\n\n(匯入後可再手動針對異動車位進行微調)")) {
+                copyPreviousData(getPeriodString(), prevPeriodStr);
+            }
+        }
+
       } catch (err) {
         document.getElementById('status-msg').innerText = "載入失敗：" + err;
       }
+    }
+
+    // 呼叫後端執行複製動作
+    async function copyPreviousData(targetPeriod, sourcePeriod) {
+        document.getElementById('status-msg').style.display = 'block';
+        document.getElementById('status-msg').innerText = "資料匯入中，請稍候...";
+        
+        var payload = { action: 'copy_period', targetPeriod: targetPeriod, sourcePeriod: sourcePeriod };
+        try {
+            const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if(result.status === 'success') { 
+                alert(result.msg); 
+                initializeApp(); // 複製成功後，重新整理畫面秀出新資料
+            } else { 
+                alert("錯誤：" + result.msg); 
+                document.getElementById('status-msg').style.display = 'none'; 
+            }
+        } catch (err) { 
+            alert("連線失敗：" + err); 
+            document.getElementById('status-msg').style.display = 'none'; 
+        }
     }
 
     function renderGrid(data) {
@@ -140,7 +176,6 @@
         div.className = 'parking-space';
         if (space.Status === "空位" || space.Status === "") {
           div.classList.add('status-empty');
-          // 這裡的「空位」字體也放大了！
           div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info" style="justify-content: center;"><span style="font-size: 26px; color: #666;">空位</span></div></div>`;
         } else {
           div.classList.add('status-occupied');
