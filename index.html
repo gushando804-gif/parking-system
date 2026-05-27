@@ -6,50 +6,53 @@
   <title>珠靈殿停車管理系統</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 8px; background-color: #f4f4f9; }
-    .header-nav { display: flex; justify-content: center; align-items: center; margin-bottom: 12px; margin-top: 5px; }
-    .header-nav h2 { margin: 0 10px; color: #333; font-size: 22px; width: 200px; text-align: center; }
-    .nav-btn { background-color: #4CAF50; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    body { font-family: sans-serif; padding: 10px; background-color: #f4f4f9; }
+    .header-nav { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; margin-top: 5px; }
+    .header-nav h2 { margin: 0 10px; color: #333; font-size: 26px; width: 220px; text-align: center; font-weight: bold; }
+    .nav-btn { background-color: #4CAF50; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 22px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
     .nav-btn:active { transform: scale(0.9); }
-    #status-msg { text-align: center; color: #666; margin-bottom: 10px; font-weight: bold; font-size: 14px; }
+    #status-msg { text-align: center; color: #666; margin-bottom: 10px; font-weight: bold; font-size: 18px; }
     
-    /* 🌟 預設 (手機版)：1 列 3 格 */
-    .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 5px; }
+    /* 🌟 長輩友善版：手機強制 1 列 1 格，間距拉開防誤觸 */
+    .grid-container { display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; margin-top: 10px; }
     
-    .parking-space { padding: 0; text-align: center; border-radius: 8px; font-weight: bold; cursor: pointer; border: 1px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s; overflow: hidden; }
+    .parking-space { padding: 0; text-align: center; border-radius: 12px; font-weight: bold; cursor: pointer; border: 2px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: transform 0.1s; overflow: hidden; }
     .parking-space:active { transform: scale(0.95); }
     .status-empty { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
     .status-occupied { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } 
     
-    .space-layout { display: flex; height: 100%; min-height: 60px; }
-    .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 20px; border-right: 1px solid rgba(0,0,0,0.15); }
+    /* 🌟 高度加高，字體全面巨大化 */
+    .space-layout { display: flex; height: 100%; min-height: 90px; }
+    .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
     
-    .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 4px 2px; border-bottom: 1px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
-    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 4px 2px; font-size: 12px; letter-spacing: -0.5px; flex: 1; white-space: nowrap; overflow: hidden; }
+    .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 6px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
+    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 6px; font-size: 22px; letter-spacing: 1px; flex: 1; white-space: nowrap; overflow: hidden; }
     
-    .info-name { font-size: 14px; font-weight: bold; }
-    .info-plate { font-size: 11px; opacity: 0.8; margin-left: 2px; text-overflow: ellipsis; }
+    .info-name { font-size: 26px; font-weight: bold; }
+    .info-plate { font-size: 18px; opacity: 0.8; margin-left: 10px; text-overflow: ellipsis; }
 
-    /* 🌟 新增：電腦版自動變形 (螢幕寬度大於 768px 時觸發) 🌟 */
+    /* 🌟 電腦版依然維持多格排版，方便大螢幕總覽 🌟 */
     @media (min-width: 768px) {
       .grid-container { grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 15px; }
       .space-layout { min-height: 75px; }
-      .space-id { font-size: 26px; }
+      .space-id { font-size: 26px; border-right: 1px solid rgba(0,0,0,0.15); }
       .info-name { font-size: 18px; }
-      .info-plate { font-size: 14px; }
-      .space-row-bottom { font-size: 15px; }
+      .info-plate { font-size: 14px; margin-left: 6px; }
+      .space-row-bottom { font-size: 15px; letter-spacing: 0px; }
+      .space-row-top { border-bottom: 1px solid rgba(0,0,0,0.15); padding: 4px; }
+      .parking-space { border-width: 1px; border-radius: 8px; }
     }
 
-    /* 彈出視窗樣式 */
+    /* 彈出視窗樣式：字體與按鈕也都放大 */
     .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
-    .modal-content { background-color: #fff; margin: 15% auto; padding: 25px; border-radius: 12px; width: 85%; max-width: 400px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-    .modal-content h3 { margin-top: 0; text-align: center; color: #333; font-size: 22px; }
-    .input-group { margin-bottom: 15px; }
-    .input-group label { display: block; font-size: 16px; margin-bottom: 5px; font-weight: bold;}
-    .input-group select, .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
+    .modal-content { background-color: #fff; margin: 15% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .modal-content h3 { margin-top: 0; text-align: center; color: #333; font-size: 24px; }
+    .input-group { margin-bottom: 18px; }
+    .input-group label { display: block; font-size: 18px; margin-bottom: 8px; font-weight: bold;}
+    .input-group select, .input-group input { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 18px; box-sizing: border-box; }
     .btn-row { display: flex; justify-content: space-between; margin-top: 25px; }
-    .btn { padding: 12px 15px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; }
+    .btn { padding: 15px 15px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; }
     .btn-save { background-color: #007bff; color: white; flex-grow: 1; margin-right: 10px; }
     .btn-leave { background-color: #dc3545; color: white; display: none; }
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
@@ -137,7 +140,8 @@
         div.className = 'parking-space';
         if (space.Status === "空位" || space.Status === "") {
           div.classList.add('status-empty');
-          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info" style="justify-content: center;"><span style="font-size: 16px; color: #666;">空位</span></div></div>`;
+          // 這裡的「空位」字體也放大了！
+          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info" style="justify-content: center;"><span style="font-size: 26px; color: #666;">空位</span></div></div>`;
         } else {
           div.classList.add('status-occupied');
           var displayName = space.Name ? space.Name : "未填寫";
