@@ -182,10 +182,7 @@
           var displayName = space.Name ? space.Name : "未填寫";
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
           var displayPhone = space.Phone ? space.Phone : "無電話";
-          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info"><div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div><div class="space-row-bottom">${display
-		  
-		  
-		  }</div></div></div>`;
+          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info"><div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div><div class="space-row-bottom">${display}</div></div></div>`;
         }
         div.onclick = function() { openModal(space); };
         grid.appendChild(div);
