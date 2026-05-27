@@ -97,7 +97,6 @@
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // GAS 網址已保留為你最新可用的設定
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbzfnNiEBM2CG_xYP8dIuYlNuKmTErtndnCyOk_gwWZO6qjewouIX7oLC2GgIlho7kiDHg/exec";
 
     let currentYear = 115;
@@ -110,23 +109,4 @@
       currentMonth += direction * 2;
       if (currentMonth > 11) { currentMonth = 1; currentYear++; } 
       else if (currentMonth < 1) { currentMonth = 11; currentYear--; }
-      document.getElementById('period-title').innerText = `民國 ${currentYear}年 ${currentMonth}-${currentMonth+1}月`;
-      initializeApp(); 
-    }
-
-    async function initializeApp() {
-      try {
-        await liff.init({ liffId: MY_LIFF_ID });
-        document.getElementById('status-msg').style.display = 'block';
-        document.getElementById('status-msg').innerText = "資料讀取中...";
-        
-        const response = await fetch(`${MY_GAS_URL}?period=${getPeriodString()}`);
-        const payload = await response.json(); 
-        
-        globalCustomers = payload.customers; 
-        renderGrid(payload.spaces);          
-        
-        // 🌟 神級功能：發現新帳本自動詢問複製 🌟
-        if (payload.isNewSheet) {
-            // 自動往回推算「上個月」的名稱
-            let prevMonth
+      document.getElementById('period-title').innerText = `民國 ${currentYear}年 ${currentMonth}-${
