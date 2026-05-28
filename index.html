@@ -6,16 +6,24 @@
   <title>珠靈殿停車管理系統</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 10px; background-color: #f4f4f9; }
+    body { font-family: sans-serif; padding: 10px; background-color: #f4f4f9; margin: 0; }
+    
+    /* 🌟 身分驗證畫面的樣式 🌟 */
+    #auth-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; text-align: center; padding: 20px; }
+    #auth-screen h1 { color: #333; margin-bottom: 10px; }
+    #auth-screen p { font-size: 18px; color: #666; line-height: 1.5; }
+    .uid-box { background: #e9ecef; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 16px; margin-top: 20px; word-break: break-all; user-select: all; border: 2px dashed #ccc;}
+    
+    /* 主系統容器 (預設隱藏) */
+    #main-app { display: none; }
+
     .header-nav { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; margin-top: 5px; }
     .header-nav h2 { margin: 0 10px; color: #333; font-size: 26px; width: 220px; text-align: center; font-weight: bold; }
     .nav-btn { background-color: #4CAF50; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 22px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
     .nav-btn:active { transform: scale(0.9); }
     #status-msg { text-align: center; color: #666; margin-bottom: 10px; font-weight: bold; font-size: 18px; }
     
-    /* 🌟 長輩友善版：手機強制 1 列 1 格 */
     .grid-container { display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; margin-top: 10px; }
-    
     .parking-space { padding: 0; text-align: center; border-radius: 12px; font-weight: bold; cursor: pointer; border: 2px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: transform 0.1s; overflow: hidden; }
     .parking-space:active { transform: scale(0.95); }
     .status-empty { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
@@ -24,14 +32,11 @@
     .space-layout { display: flex; height: 100%; min-height: 90px; }
     .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
-    
     .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 6px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
-    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 6px; font-size: 28px; letter-spacing: 1px; flex: 1; white-space: nowrap; overflow: hidden; }
-    
-    .info-name { font-size: 28px; font-weight: bold; }
-    .info-plate { font-size: 28px; opacity: 0.8; margin-left: 26px; text-overflow: ellipsis; }
+    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 6px; font-size: 26px; letter-spacing: 1px; flex: 1; white-space: nowrap; overflow: hidden; }
+    .info-name { font-size: 26px; font-weight: bold; }
+    .info-plate { font-size: 26px; opacity: 0.8; margin-left: 26px; text-overflow: ellipsis; }
 
-    /* 電腦版維持大螢幕總覽 */
     @media (min-width: 768px) {
       .grid-container { grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 15px; }
       .space-layout { min-height: 75px; }
@@ -43,7 +48,6 @@
       .parking-space { border-width: 1px; border-radius: 8px; }
     }
 
-    /* 彈出視窗樣式 */
     .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
     .modal-content { background-color: #fff; margin: 15% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .modal-content h3 { margin-top: 0; text-align: center; color: #333; font-size: 24px; }
@@ -59,111 +63,141 @@
 </head>
 <body>
 
-  <div class="header-nav">
-    <button class="nav-btn" onclick="changePeriod(-1)">&#10094;</button>
-    <h2 id="period-title">民國 115年 5-6月</h2>
-    <button class="nav-btn" onclick="changePeriod(1)">&#10095;</button>
+  <div id="auth-screen">
+    <h1 id="auth-title">系統驗證中...</h1>
+    <p id="auth-desc">請稍候，正在讀取您的 LINE 身分資料</p>
   </div>
 
-  <div id="status-msg">系統載入中，請稍候...</div>
-  <div id="parking-grid" class="grid-container"></div>
+  <div id="main-app">
+    <div class="header-nav">
+      <button class="nav-btn" onclick="changePeriod(-1)">&#10094;</button>
+      <h2 id="period-title">民國 115年 5-6月</h2>
+      <button class="nav-btn" onclick="changePeriod(1)">&#10095;</button>
+    </div>
 
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <h3 id="modal-title">車位編輯</h3>
-      <input type="hidden" id="modal-spaceId">
-      
-      <div class="input-group">
-        <label>客戶姓名：</label>
-        <select id="modal-name-select" onchange="handleCustomerSelect()"></select>
-        <input type="text" id="modal-name-custom" placeholder="請輸入新客戶姓名" style="display:none; margin-top:8px;">
-      </div>
-      <div class="input-group">
-        <label>車牌：</label>
-        <input type="text" id="modal-plate" placeholder="請輸入車牌 (選填)">
-      </div>
-      <div class="input-group">
-        <label>電話：</label>
-        <input type="text" id="modal-phone" placeholder="請輸入電話 (選填)">
-      </div>
-      
-      <div class="btn-row">
-        <button class="btn btn-save" id="btn-save" onclick="saveData()">儲存</button>
-        <button class="btn btn-leave" id="btn-leave" onclick="leaveSpace()">退租清空</button>
-        <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+    <div id="status-msg">資料載入中，請稍候...</div>
+    <div id="parking-grid" class="grid-container"></div>
+
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <h3 id="modal-title">車位編輯</h3>
+        <input type="hidden" id="modal-spaceId">
+        
+        <div class="input-group">
+          <label>客戶姓名：</label>
+          <select id="modal-name-select" onchange="handleCustomerSelect()"></select>
+          <input type="text" id="modal-name-custom" placeholder="請輸入新客戶姓名" style="display:none; margin-top:8px;">
+        </div>
+        <div class="input-group">
+          <label>車牌：</label>
+          <input type="text" id="modal-plate" placeholder="請輸入車牌 (選填)">
+        </div>
+        <div class="input-group">
+          <label>電話：</label>
+          <input type="text" id="modal-phone" placeholder="請輸入電話 (選填)">
+        </div>
+        
+        <div class="btn-row">
+          <button class="btn btn-save" id="btn-save" onclick="saveData()">儲存</button>
+          <button class="btn btn-leave" id="btn-leave" onclick="leaveSpace()">退租清空</button>
+          <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbzfnNiEBM2CG_xYP8dIuYlNuKmTErtndnCyOk_gwWZO6qjewouIX7oLC2GgIlho7kiDHg/exec";
+    // ⚠️ 貼上你全新的 GAS 網址！
+    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbxU9BOVlXNf8a9M4PH9M0a-q1WbC3l0O6HORnV4ktMZib9xy3rdamnPx5Px_crbdznzoQ/exec";
 
     let currentYear = 115;
     let currentMonth = 5; 
     let globalCustomers = []; 
+    let globalUserRole = "none"; // 儲存當前使用者的權限
 
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
+
+    // 🌟 1. 系統進入點：先驗證身分 🌟
+    async function initAuth() {
+      try {
+        await liff.init({ liffId: MY_LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+        
+        const profile = await liff.getProfile();
+        const userId = profile.userId;
+
+        // 向 GAS 確認此 UID 的權限
+        const response = await fetch(MY_GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'login', uid: userId })
+        });
+        const result = await response.json();
+
+        if (result.role === 'admin' || result.role === 'viewer') {
+           // 驗證成功，顯示主系統
+           globalUserRole = result.role;
+           document.getElementById('auth-screen').style.display = 'none';
+           document.getElementById('main-app').style.display = 'block';
+           loadData(); // 開始載入車位資料
+        } else {
+           // 驗證失敗，顯示申請畫面與 UID
+           document.getElementById('auth-title').innerText = "⛔ 無存取權限";
+           document.getElementById('auth-title').style.color = "#dc3545";
+           document.getElementById('auth-desc').innerHTML = `
+             您尚未被開通此系統的使用權限。<br><br>
+             請將下方您的專屬 ID 長按複製，<br>並傳送給系統管理員進行開通：
+             <div class="uid-box">${userId}</div>
+           `;
+        }
+
+      } catch (err) {
+        document.getElementById('auth-title').innerText = "連線失敗";
+        document.getElementById('auth-desc').innerText = err;
+      }
+    }
 
     function changePeriod(direction) {
       currentMonth += direction * 2;
       if (currentMonth > 11) { currentMonth = 1; currentYear++; } 
       else if (currentMonth < 1) { currentMonth = 11; currentYear--; }
       document.getElementById('period-title').innerText = `民國 ${currentYear}年 ${currentMonth}-${currentMonth+1}月`;
-      initializeApp(); 
+      loadData(); 
     }
 
-    async function initializeApp() {
+    async function loadData() {
+      document.getElementById('status-msg').style.display = 'block';
       try {
-        await liff.init({ liffId: MY_LIFF_ID });
-        document.getElementById('status-msg').style.display = 'block';
-        document.getElementById('status-msg').innerText = "資料讀取中...";
-        
         const response = await fetch(`${MY_GAS_URL}?period=${getPeriodString()}`);
         const payload = await response.json(); 
-        
         globalCustomers = payload.customers; 
         renderGrid(payload.spaces);          
         
-        // 🌟 神級功能：發現新帳本自動詢問複製 🌟
-        if (payload.isNewSheet) {
-            // 自動往回推算「上個月」的名稱
+        if (payload.isNewSheet && globalUserRole === 'admin') {
             let prevMonth = currentMonth - 2;
             let prevYear = currentYear;
             if (prevMonth < 1) { prevMonth = 11; prevYear--; }
             let prevPeriodStr = `${prevYear}_${prevMonth}-${prevMonth+1}`;
             
-            // 跳出對話框詢問
-            if (confirm("💡 系統提示：\n發現這是一個全新月份的空白帳本！\n請問是否要一鍵匯入「上個月 (" + prevMonth + "-" + (prevMonth+1) + "月)」的所有租客資料？\n\n(匯入後可再手動針對異動車位進行微調)")) {
+            if (confirm("💡 系統提示：\n發現這是一個全新月份的空白帳本！\n請問是否要一鍵匯入「上個月」的所有租客資料？")) {
                 copyPreviousData(getPeriodString(), prevPeriodStr);
             }
         }
-
-      } catch (err) {
-        document.getElementById('status-msg').innerText = "載入失敗：" + err;
-      }
+      } catch (err) { document.getElementById('status-msg').innerText = "載入失敗：" + err; }
     }
 
-    // 呼叫後端執行複製動作
     async function copyPreviousData(targetPeriod, sourcePeriod) {
-        document.getElementById('status-msg').style.display = 'block';
         document.getElementById('status-msg').innerText = "資料匯入中，請稍候...";
-        
         var payload = { action: 'copy_period', targetPeriod: targetPeriod, sourcePeriod: sourcePeriod };
         try {
             const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
             const result = await response.json();
-            if(result.status === 'success') { 
-                alert(result.msg); 
-                initializeApp(); // 複製成功後，重新整理畫面秀出新資料
-            } else { 
-                alert("錯誤：" + result.msg); 
-                document.getElementById('status-msg').style.display = 'none'; 
-            }
-        } catch (err) { 
-            alert("連線失敗：" + err); 
-            document.getElementById('status-msg').style.display = 'none'; 
-        }
+            if(result.status === 'success') { alert(result.msg); loadData(); } 
+            else { alert("錯誤：" + result.msg); }
+        } catch (err) { alert("連線失敗：" + err); }
     }
 
     function renderGrid(data) {
@@ -190,6 +224,12 @@
     }
 
     function openModal(space) {
+      // 🌟 權限阻擋：如果是檢視者，跳出警告並阻擋開啟 🌟
+      if (globalUserRole === 'viewer') {
+        alert("⚠️ 權限不足：您目前為「檢視者」，僅能查看車位狀態，無法進行修改！");
+        return; 
+      }
+
       document.getElementById('modal-spaceId').value = space.SpaceID;
       document.getElementById('modal-title').innerText = `管理車位：${space.SpaceID} 號`;
       const select = document.getElementById('modal-name-select');
@@ -289,12 +329,13 @@
       try {
         const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
         const result = await response.json();
-        if(result.status === 'success') { alert(result.msg); initializeApp(); } 
+        if(result.status === 'success') { alert(result.msg); loadData(); } 
         else { alert("錯誤：" + result.msg); document.getElementById('status-msg').style.display = 'none'; }
       } catch (err) { alert("連線失敗：" + err); document.getElementById('status-msg').style.display = 'none'; }
     }
 
-    initializeApp();
+    // 取代原本的 initializeApp()，現在網頁一打開先跑權限驗證！
+    initAuth();
   </script>
 </body>
 </html>
