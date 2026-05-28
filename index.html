@@ -48,6 +48,7 @@
       .parking-space { border-width: 1px; border-radius: 8px; }
     }
 
+    /* 彈出視窗共通樣式 */
     .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
     .modal-content { background-color: #fff; margin: 15% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .modal-content h3 { margin-top: 0; text-align: center; color: #333; font-size: 24px; }
@@ -63,13 +64,11 @@
 </head>
 <body>
 
-  <!-- 驗證畫面 -->
   <div id="auth-screen">
     <h1 id="auth-title">系統驗證中...</h1>
     <p id="auth-desc">請稍候，正在讀取您的 LINE 身分資料</p>
   </div>
 
-  <!-- 主系統畫面 -->
   <div id="main-app">
     <div class="header-nav">
       <button class="nav-btn" onclick="changePeriod(-1)">&#10094;</button>
@@ -106,18 +105,37 @@
         </div>
       </div>
     </div>
+
+    <div id="copyModal" class="modal">
+      <div class="modal-content" style="max-width: 350px;">
+        <h3 style="color: #007bff; font-size: 28px;">💡 系統提示</h3>
+        <p style="font-size: 22px; text-align: center; font-weight: bold; line-height: 1.6; margin: 25px 0; color: #333;">
+          發現這是一個全新月份的空白帳本！<br><br>
+          <span style="color: #dc3545;">請問是否要一鍵匯入「上個月」的所有租客資料？</span>
+        </p>
+        <div class="btn-row">
+          <button class="btn btn-save" onclick="confirmCopy()" style="font-size: 22px; padding: 15px;">確定匯入</button>
+          <button class="btn btn-cancel" onclick="closeCopyModal()" style="font-size: 22px; padding: 15px; margin-left: 10px;">先不要</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // ⚠️ 請貼上你最新的 GAS 網址！
+    // ⚠️ 請在這裡貼上你的_GAS_網址！
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
     let currentYear = 115;
     let currentMonth = 5; 
     let globalCustomers = []; 
     let globalUserRole = "none"; 
-    let globalUserId = ""; // 🌟 新增：記錄當前使用者的 UID 🌟
+    let globalUserId = ""; 
+    
+    // 🌟 用來暫存要複製的月份變數 🌟
+    let pendingTargetPeriod = "";
+    let pendingSourcePeriod = "";
 
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
 
@@ -130,7 +148,7 @@
         }
         
         const profile = await liff.getProfile();
-        globalUserId = profile.userId; // 將 UID 存起來
+        globalUserId = profile.userId; 
 
         const response = await fetch(MY_GAS_URL, {
           method: 'POST',
@@ -181,16 +199,26 @@
             if (prevMonth < 1) { prevMonth = 11; prevYear--; }
             let prevPeriodStr = `${prevYear}_${prevMonth}-${prevMonth+1}`;
             
-            if (confirm("💡 系統提示：\n發現這是一個全新月份的空白帳本！\n請問是否要一鍵匯入「上個月」的所有租客資料？")) {
-                copyPreviousData(getPeriodString(), prevPeriodStr);
-            }
+            // 🌟 拋棄系統原生小視窗，改為呼叫自訂的超大字體視窗 🌟
+            pendingTargetPeriod = getPeriodString();
+            pendingSourcePeriod = prevPeriodStr;
+            document.getElementById('copyModal').style.display = 'block';
         }
       } catch (err) { document.getElementById('status-msg').innerText = "載入失敗：" + err; }
     }
 
+    // 🌟 控制複製提示視窗的開關 🌟
+    function closeCopyModal() {
+        document.getElementById('copyModal').style.display = 'none';
+    }
+
+    function confirmCopy() {
+        closeCopyModal();
+        copyPreviousData(pendingTargetPeriod, pendingSourcePeriod);
+    }
+
     async function copyPreviousData(targetPeriod, sourcePeriod) {
         document.getElementById('status-msg').innerText = "資料匯入中，請稍候...";
-        // 🌟 匯入資料時，也把操作者的 UID 寄給後端 🌟
         var payload = { action: 'copy_period', targetPeriod: targetPeriod, sourcePeriod: sourcePeriod, uid: globalUserId };
         try {
             const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
@@ -325,7 +353,6 @@
       document.getElementById('status-msg').style.display = 'block';
       document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
       
-      // 🌟 儲存或退租時，把 UID 也打包送給後端 🌟
       var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, period: getPeriodString(), uid: globalUserId };
       
       try {
