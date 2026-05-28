@@ -8,13 +8,13 @@
   <style>
     body { font-family: sans-serif; padding: 10px; background-color: #f4f4f9; margin: 0; }
     
-    /* 🌟 身分驗證畫面的樣式 🌟 */
+    /* 身分驗證畫面的樣式 */
     #auth-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; text-align: center; padding: 20px; }
     #auth-screen h1 { color: #333; margin-bottom: 10px; }
     #auth-screen p { font-size: 18px; color: #666; line-height: 1.5; }
     .uid-box { background: #e9ecef; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 16px; margin-top: 20px; word-break: break-all; user-select: all; border: 2px dashed #ccc;}
     
-    /* 主系統容器 (預設隱藏) */
+    /* 主系統容器 */
     #main-app { display: none; }
 
     .header-nav { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; margin-top: 5px; }
@@ -63,11 +63,13 @@
 </head>
 <body>
 
+  <!-- 驗證畫面 -->
   <div id="auth-screen">
     <h1 id="auth-title">系統驗證中...</h1>
     <p id="auth-desc">請稍候，正在讀取您的 LINE 身分資料</p>
   </div>
 
+  <!-- 主系統畫面 -->
   <div id="main-app">
     <div class="header-nav">
       <button class="nav-btn" onclick="changePeriod(-1)">&#10094;</button>
@@ -108,17 +110,17 @@
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // ⚠️ 貼上你全新的 GAS 網址！
-    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbxU9BOVlXNf8a9M4PH9M0a-q1WbC3l0O6HORnV4ktMZib9xy3rdamnPx5Px_crbdznzoQ/exec";
+    // ⚠️ 請貼上你最新的 GAS 網址！
+    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
     let currentYear = 115;
     let currentMonth = 5; 
     let globalCustomers = []; 
-    let globalUserRole = "none"; // 儲存當前使用者的權限
+    let globalUserRole = "none"; 
+    let globalUserId = ""; // 🌟 新增：記錄當前使用者的 UID 🌟
 
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
 
-    // 🌟 1. 系統進入點：先驗證身分 🌟
     async function initAuth() {
       try {
         await liff.init({ liffId: MY_LIFF_ID });
@@ -128,29 +130,26 @@
         }
         
         const profile = await liff.getProfile();
-        const userId = profile.userId;
+        globalUserId = profile.userId; // 將 UID 存起來
 
-        // 向 GAS 確認此 UID 的權限
         const response = await fetch(MY_GAS_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: 'login', uid: userId })
+          body: JSON.stringify({ action: 'login', uid: globalUserId })
         });
         const result = await response.json();
 
         if (result.role === 'admin' || result.role === 'viewer') {
-           // 驗證成功，顯示主系統
            globalUserRole = result.role;
            document.getElementById('auth-screen').style.display = 'none';
            document.getElementById('main-app').style.display = 'block';
-           loadData(); // 開始載入車位資料
+           loadData(); 
         } else {
-           // 驗證失敗，顯示申請畫面與 UID
            document.getElementById('auth-title').innerText = "⛔ 無存取權限";
            document.getElementById('auth-title').style.color = "#dc3545";
            document.getElementById('auth-desc').innerHTML = `
              您尚未被開通此系統的使用權限。<br><br>
              請將下方您的專屬 ID 長按複製，<br>並傳送給系統管理員進行開通：
-             <div class="uid-box">${userId}</div>
+             <div class="uid-box">${globalUserId}</div>
            `;
         }
 
@@ -191,7 +190,8 @@
 
     async function copyPreviousData(targetPeriod, sourcePeriod) {
         document.getElementById('status-msg').innerText = "資料匯入中，請稍候...";
-        var payload = { action: 'copy_period', targetPeriod: targetPeriod, sourcePeriod: sourcePeriod };
+        // 🌟 匯入資料時，也把操作者的 UID 寄給後端 🌟
+        var payload = { action: 'copy_period', targetPeriod: targetPeriod, sourcePeriod: sourcePeriod, uid: globalUserId };
         try {
             const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
             const result = await response.json();
@@ -224,7 +224,6 @@
     }
 
     function openModal(space) {
-      // 🌟 權限阻擋：如果是檢視者，跳出警告並阻擋開啟 🌟
       if (globalUserRole === 'viewer') {
         alert("⚠️ 權限不足：您目前為「檢視者」，僅能查看車位狀態，無法進行修改！");
         return; 
@@ -325,7 +324,10 @@
     async function sendUpdateRequest(spaceId, action, name, phone, plate) {
       document.getElementById('status-msg').style.display = 'block';
       document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
-      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, period: getPeriodString() };
+      
+      // 🌟 儲存或退租時，把 UID 也打包送給後端 🌟
+      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, period: getPeriodString(), uid: globalUserId };
+      
       try {
         const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
         const result = await response.json();
@@ -334,7 +336,6 @@
       } catch (err) { alert("連線失敗：" + err); document.getElementById('status-msg').style.display = 'none'; }
     }
 
-    // 取代原本的 initializeApp()，現在網頁一打開先跑權限驗證！
     initAuth();
   </script>
 </body>
