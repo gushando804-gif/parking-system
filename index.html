@@ -25,21 +25,36 @@
     .parking-space { padding: 0; text-align: center; border-radius: 12px; font-weight: bold; cursor: pointer; border: 2px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: transform 0.1s; overflow: hidden; }
     .parking-space:active { transform: scale(0.95); }
     
-    /* 🌟 終極視覺化：三種狀態的顏色設定 🌟 */
-    .status-empty { background-color: #e9ecef; color: #6c757d; border-color: #ced4da; } /* 淺灰色：空位 */
-    .status-unpaid { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } /* 淺紅色：未繳費 */
-    .status-paid { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } /* 淺綠色：已繳費 */
+    .status-empty { background-color: #e9ecef; color: #6c757d; border-color: #ced4da; } 
+    .status-unpaid { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } 
+    .status-paid { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
     
     .space-layout { display: flex; height: 100%; min-height: 90px; }
     .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
     .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 6px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
-    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 6px; font-size: 26px; letter-spacing: 1px; flex: 1; white-space: nowrap; overflow: hidden; }
+    
+    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 6px; font-size: 21px; letter-spacing: 0px; flex: 1; white-space: nowrap; overflow: hidden; }
+    
     .info-name { font-size: 26px; font-weight: bold; }
     .info-plate { font-size: 26px; opacity: 0.8; margin-left: 26px; text-overflow: ellipsis; }
     
-    .badge-amount { margin-left: 12px; font-weight: bold; }
-    .badge-note { margin-left: 8px; font-size: 22px; }
+    .badge-amount { margin-left: 8px; font-weight: bold; font-size: 20px; }
+    .badge-note { margin-left: 8px; font-size: 20px; }
+    
+    /* 🌟 修改：點擊撥號的連結樣式 (加入防止選取與彈出選單的防呆) 🌟 */
+    .phone-link { 
+      color: inherit; 
+      text-decoration: underline; 
+      text-decoration-style: dotted; 
+      text-underline-offset: 4px; 
+      cursor: pointer; 
+      /* 防止長按時跳出預設的文字反白或拷貝選單 */
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    .phone-link:active { opacity: 0.6; color: #007bff; }
 
     @media (min-width: 768px) {
       .grid-container { grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 15px; }
@@ -47,10 +62,11 @@
       .space-id { font-size: 26px; border-right: 1px solid rgba(0,0,0,0.15); }
       .info-name { font-size: 26px; }
       .info-plate { font-size: 26px; margin-left: 6px; }
-      .space-row-bottom { font-size: 15px; letter-spacing: 0px; }
+      .space-row-bottom { font-size: 16px; letter-spacing: 0px; }
       .space-row-top { border-bottom: 1px solid rgba(0,0,0,0.15); padding: 4px; }
       .parking-space { border-width: 1px; border-radius: 8px; }
       .badge-note { font-size: 16px; }
+      .badge-amount { font-size: 16px; }
     }
 
     .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow-y: auto; }
@@ -140,7 +156,8 @@
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
+    // ⚠️ 貼回你的 GAS 網址 ⚠️
+    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbyS35nSYJkVSVjEp4ZPkBT8o3lNQd-ARQO8BVjOVXwfqDOtbS8-QckDHyBxaAtxC4MN/exec";
 
     let currentYear = 115;
     let currentMonth = 5; 
@@ -149,6 +166,19 @@
     let globalUserId = ""; 
     let pendingTargetPeriod = "";
     let pendingSourcePeriod = "";
+
+    // 🌟 核心：長按 2 秒撥號的計時器邏輯 🌟
+    let pressTimer;
+    function startPress(e, phone) {
+      e.stopPropagation(); // 防止點擊事件擴散去打開編輯視窗
+      pressTimer = setTimeout(function() {
+        window.location.href = "tel:" + phone; // 滿2秒後觸發撥號
+      }, 2000); // 這裡的 2000 代表 2000毫秒 (2秒)，覺得太久可以改成 1500
+    }
+    function cancelPress(e) {
+      if(e) e.stopPropagation();
+      clearTimeout(pressTimer); // 手指離開或滑動時，立刻取消計時
+    }
 
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
 
@@ -240,26 +270,23 @@
         div.className = 'parking-space';
         
         if (space.Status === "空位" || space.Status === "") {
-          // 🌟 1. 空位：淺灰色 🌟
           div.classList.add('status-empty');
           div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info" style="justify-content: center;"><span style="font-size: 26px; color: #888;">空位</span></div></div>`;
         } else {
-          // 判斷是否繳費
           var isPaid = space.Amount && space.Amount.toString().trim() !== "";
           
           if (isPaid) {
-            // 🌟 2. 已繳費：淺綠色 🌟
             div.classList.add('status-paid');
           } else {
-            // 🌟 3. 未繳費：淺紅色 🌟
             div.classList.add('status-unpaid');
           }
 
           var displayName = space.Name ? space.Name : "未填寫";
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
-          var displayPhone = space.Phone ? space.Phone : "無電話";
           
-          // 若已繳費顯示金額，未繳費顯示顯眼的「(未繳費)」
+          // 🌟 修改：將電話加入各種觸控事件，觸發「點住兩秒」的功能 🌟
+          var displayPhone = space.Phone ? `<span class="phone-link" onmousedown="startPress(event, '${space.Phone}')" onmouseup="cancelPress(event)" onmouseleave="cancelPress(event)" ontouchstart="startPress(event, '${space.Phone}')" ontouchend="cancelPress(event)" ontouchmove="cancelPress(event)" onclick="event.stopPropagation();">${space.Phone}</span>` : "無電話";
+          
           var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
           var displayNote = space.Note ? `<span class="badge-note" title="${space.Note}">📝</span>` : "";
 
@@ -302,7 +329,6 @@
         select.value = "";
         phoneInput.value = "";
         plateInput.value = "";
-        // 🌟 新租客：直接幫你預設帶入 3600！ 🌟
         document.getElementById('modal-amount').value = "3600";
         document.getElementById('modal-note').value = "";
       } else {
@@ -323,7 +349,6 @@
         }
         phoneInput.value = space.Phone || "";
         plateInput.value = space.LicensePlate || "";
-        // 舊租客：保留原本的金額設定，如果是未繳費就留空
         document.getElementById('modal-amount').value = space.Amount || "";
         document.getElementById('modal-note').value = space.Note || "";
       }
