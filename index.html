@@ -8,13 +8,11 @@
   <style>
     body { font-family: sans-serif; padding: 10px; background-color: #f4f4f9; margin: 0; }
     
-    /* 身分驗證畫面的樣式 */
     #auth-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; text-align: center; padding: 20px; }
     #auth-screen h1 { color: #333; margin-bottom: 10px; }
     #auth-screen p { font-size: 18px; color: #666; line-height: 1.5; }
     .uid-box { background: #e9ecef; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 16px; margin-top: 20px; word-break: break-all; user-select: all; border: 2px dashed #ccc;}
     
-    /* 主系統容器 */
     #main-app { display: none; }
 
     .header-nav { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; margin-top: 5px; }
@@ -36,6 +34,10 @@
     .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 6px; font-size: 26px; letter-spacing: 1px; flex: 1; white-space: nowrap; overflow: hidden; }
     .info-name { font-size: 26px; font-weight: bold; }
     .info-plate { font-size: 26px; opacity: 0.8; margin-left: 26px; text-overflow: ellipsis; }
+    
+    /* 🌟 小圖示與金額的樣式 🌟 */
+    .badge-amount { color: #d9534f; margin-left: 12px; font-weight: bold; }
+    .badge-note { margin-left: 8px; font-size: 22px; }
 
     @media (min-width: 768px) {
       .grid-container { grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 15px; }
@@ -46,11 +48,11 @@
       .space-row-bottom { font-size: 15px; letter-spacing: 0px; }
       .space-row-top { border-bottom: 1px solid rgba(0,0,0,0.15); padding: 4px; }
       .parking-space { border-width: 1px; border-radius: 8px; }
+      .badge-note { font-size: 16px; }
     }
 
-    /* 彈出視窗共通樣式 */
-    .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
-    .modal-content { background-color: #fff; margin: 15% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow-y: auto; }
+    .modal-content { background-color: #fff; margin: 10% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .modal-content h3 { margin-top: 0; text-align: center; color: #333; font-size: 24px; }
     .input-group { margin-bottom: 18px; }
     .input-group label { display: block; font-size: 18px; margin-bottom: 8px; font-weight: bold;}
@@ -98,9 +100,18 @@
           <input type="text" id="modal-phone" placeholder="請輸入電話 (選填)">
         </div>
         
+        <div class="input-group">
+          <label>繳費金額 (選填)：</label>
+          <input type="text" id="modal-amount" placeholder="例如: 1500">
+        </div>
+        <div class="input-group">
+          <label>備註 (選填)：</label>
+          <input type="text" id="modal-note" placeholder="例如: 5/15起租，單日計算">
+        </div>
+        
         <div class="btn-row">
           <button class="btn btn-save" id="btn-save" onclick="saveData()">儲存</button>
-          <button class="btn btn-leave" id="btn-leave" onclick="leaveSpace()">退租清空</button>
+          <button class="btn btn-leave" id="btn-leave" onclick="leaveSpace()">退租</button>
           <button class="btn btn-cancel" onclick="closeModal()">取消</button>
         </div>
       </div>
@@ -124,7 +135,7 @@
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // ⚠️ 請在這裡貼上你的_GAS_網址！
+    // ⚠️ 貼上全新的 GAS 網址 ⚠️
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
     let currentYear = 115;
@@ -132,8 +143,6 @@
     let globalCustomers = []; 
     let globalUserRole = "none"; 
     let globalUserId = ""; 
-    
-    // 🌟 用來暫存要複製的月份變數 🌟
     let pendingTargetPeriod = "";
     let pendingSourcePeriod = "";
 
@@ -146,7 +155,6 @@
           liff.login();
           return;
         }
-        
         const profile = await liff.getProfile();
         globalUserId = profile.userId; 
 
@@ -166,11 +174,10 @@
            document.getElementById('auth-title').style.color = "#dc3545";
            document.getElementById('auth-desc').innerHTML = `
              您尚未被開通此系統的使用權限。<br><br>
-             請將下方您的專屬 ID 長按複製，<br>並傳送給系統管理員進行開通：
+             請將下方您的專屬 ID 長按複製，<br>並傳送給系統管理員：
              <div class="uid-box">${globalUserId}</div>
            `;
         }
-
       } catch (err) {
         document.getElementById('auth-title').innerText = "連線失敗";
         document.getElementById('auth-desc').innerText = err;
@@ -199,7 +206,6 @@
             if (prevMonth < 1) { prevMonth = 11; prevYear--; }
             let prevPeriodStr = `${prevYear}_${prevMonth}-${prevMonth+1}`;
             
-            // 🌟 拋棄系統原生小視窗，改為呼叫自訂的超大字體視窗 🌟
             pendingTargetPeriod = getPeriodString();
             pendingSourcePeriod = prevPeriodStr;
             document.getElementById('copyModal').style.display = 'block';
@@ -207,15 +213,8 @@
       } catch (err) { document.getElementById('status-msg').innerText = "載入失敗：" + err; }
     }
 
-    // 🌟 控制複製提示視窗的開關 🌟
-    function closeCopyModal() {
-        document.getElementById('copyModal').style.display = 'none';
-    }
-
-    function confirmCopy() {
-        closeCopyModal();
-        copyPreviousData(pendingTargetPeriod, pendingSourcePeriod);
-    }
+    function closeCopyModal() { document.getElementById('copyModal').style.display = 'none'; }
+    function confirmCopy() { closeCopyModal(); copyPreviousData(pendingTargetPeriod, pendingSourcePeriod); }
 
     async function copyPreviousData(targetPeriod, sourcePeriod) {
         document.getElementById('status-msg').innerText = "資料匯入中，請稍候...";
@@ -243,7 +242,12 @@
           var displayName = space.Name ? space.Name : "未填寫";
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
           var displayPhone = space.Phone ? space.Phone : "無電話";
-          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info"><div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div><div class="space-row-bottom">${displayPhone}</div></div></div>`;
+          
+          // 🌟 如果有金額或備註，就顯示在電話號碼的旁邊 🌟
+          var displayAmount = space.Amount ? `<span class="badge-amount">$${space.Amount}</span>` : "";
+          var displayNote = space.Note ? `<span class="badge-note" title="${space.Note}">📝</span>` : "";
+
+          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info"><div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div><div class="space-row-bottom">${displayPhone}${displayAmount}${displayNote}</div></div></div>`;
         }
         div.onclick = function() { openModal(space); };
         grid.appendChild(div);
@@ -263,6 +267,10 @@
       const customName = document.getElementById('modal-name-custom');
       const phoneInput = document.getElementById('modal-phone');
       const plateInput = document.getElementById('modal-plate');
+      
+      // 🌟 載入金額與備註到輸入框 🌟
+      document.getElementById('modal-amount').value = space.Amount || "";
+      document.getElementById('modal-note').value = space.Note || "";
 
       select.innerHTML = '<option value="">-- 請選擇客戶 --</option>';
       globalCustomers.forEach(c => {
@@ -336,24 +344,29 @@
       var phone = document.getElementById('modal-phone').value;
       var plate = document.getElementById('modal-plate').value;
       
+      // 🌟 抓取金額與備註 🌟
+      var amount = document.getElementById('modal-amount').value.trim();
+      var note = document.getElementById('modal-note').value.trim();
+      
       if (!name) { alert("請選擇或輸入姓名！"); return; }
       closeModal();
-      sendUpdateRequest(spaceId, 'update', name, phone, plate);
+      sendUpdateRequest(spaceId, 'update', name, phone, plate, amount, note);
     }
 
     function leaveSpace() {
       var spaceId = document.getElementById('modal-spaceId').value;
       if(confirm(`確定要將 ${spaceId} 號車位退租，並清空客戶資料嗎？`)) {
         closeModal();
-        sendUpdateRequest(spaceId, 'leave', '', '', '');
+        sendUpdateRequest(spaceId, 'leave', '', '', '', '', '');
       }
     }
 
-    async function sendUpdateRequest(spaceId, action, name, phone, plate) {
+    // 🌟 將金額與備註參數一起打包送給後端 🌟
+    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '') {
       document.getElementById('status-msg').style.display = 'block';
       document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
       
-      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, period: getPeriodString(), uid: globalUserId };
+      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, period: getPeriodString(), uid: globalUserId };
       
       try {
         const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
