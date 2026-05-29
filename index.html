@@ -70,7 +70,7 @@
 
     /* 🌟 列印專屬防呆排版 🌟 */
     @media print {
-      @page { size: A4 portrait; margin: 1.5cm; } /* 強制 A4 直式與邊界 */
+      @page { size: A4 portrait; margin: 1.5cm; } 
       body * { visibility: hidden; }
       #print-area, #print-area * { visibility: visible; }
       #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; color: #000; font-family: "Microsoft JhengHei", sans-serif; }
@@ -81,22 +81,21 @@
       
       .page-break { page-break-before: always; clear: both; padding-top: 10px; }
       
-      /* 🌟 拋棄 Grid，改用最穩定的 Float 浮動排版 確保一排三張 🌟 */
       .receipt-grid { display: block; width: 100%; }
       .receipt-card { 
         float: left; 
-        width: 31%; /* 一張佔 31%，三張剛好 93%，剩下 7% 當作間距 */
+        width: 31%; 
         margin-right: 3.5%; 
         margin-bottom: 25px; 
         border: 2px dashed #333; 
         padding: 12px; 
         border-radius: 8px; 
         box-sizing: border-box; 
-        page-break-inside: avoid; /* 不要把收據切兩半印在不同頁 */
+        page-break-inside: avoid; 
         break-inside: avoid; 
       }
-      .receipt-card:nth-child(3n) { margin-right: 0; } /* 每第三張(最右邊那張)不留右邊距 */
-      .receipt-grid::after { content: ""; display: table; clear: both; } /* 清除浮動 */
+      .receipt-card:nth-child(3n) { margin-right: 0; } 
+      .receipt-grid::after { content: ""; display: table; clear: both; } 
 
       .r-title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 6px;}
       .r-date { text-align: center; font-size: 12px; margin-bottom: 12px; color: #333; }
@@ -182,7 +181,7 @@
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // ⚠️ 請在這裡貼回你的 GAS 網址 ⚠️
+    // 直接幫你填好最新的 GAS 網址！
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
     let currentYear = 115;
@@ -263,3 +262,223 @@
         
         if (payload.isNewSheet && globalUserRole === 'admin') {
             let prevMonth = currentMonth - 2;
+            let prevYear = currentYear;
+            if (prevMonth < 1) { prevMonth = 11; prevYear--; }
+            let prevPeriodStr = `${prevYear}_${prevMonth}-${prevMonth+1}`;
+            
+            pendingTargetPeriod = getPeriodString();
+            pendingSourcePeriod = prevPeriodStr;
+            document.getElementById('copyModal').style.display = 'block';
+        }
+      } catch (err) { document.getElementById('status-msg').innerText = "載入失敗：" + err; }
+    }
+
+    function closeCopyModal() { document.getElementById('copyModal').style.display = 'none'; }
+    function confirmCopy() { closeCopyModal(); copyPreviousData(pendingTargetPeriod, pendingSourcePeriod); }
+
+    async function copyPreviousData(targetPeriod, sourcePeriod) {
+        document.getElementById('status-msg').innerText = "資料匯入中，請稍候...";
+        var payload = { action: 'copy_period', targetPeriod: targetPeriod, sourcePeriod: sourcePeriod, uid: globalUserId };
+        try {
+            const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if(result.status === 'success') { alert(result.msg); loadData(); } 
+            else { alert("錯誤：" + result.msg); }
+        } catch (err) { alert("連線失敗：" + err); }
+    }
+
+    function renderGrid(data) {
+      const grid = document.getElementById('parking-grid');
+      grid.innerHTML = ''; 
+      
+      data.forEach(space => {
+        const div = document.createElement('div');
+        div.className = 'parking-space';
+        
+        if (space.Status === "空位" || space.Status === "") {
+          div.classList.add('status-empty');
+          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info" style="justify-content: center;"><span style="font-size: 26px; color: #888;">空位</span></div></div>`;
+        } else {
+          var isPaid = space.Amount && space.Amount.toString().trim() !== "";
+          if (isPaid) { div.classList.add('status-paid'); } else { div.classList.add('status-unpaid'); }
+
+          var displayName = space.Name ? space.Name : "未填寫";
+          var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
+          var displayPhone = space.Phone ? `<span class="phone-link" onmousedown="startPress(event, '${space.Phone}')" onmouseup="cancelPress(event)" onmouseleave="cancelPress(event)" ontouchstart="startPress(event, '${space.Phone}')" ontouchend="cancelPress(event)" ontouchmove="cancelPress(event)" onclick="event.stopPropagation();">${space.Phone}</span>` : "無電話";
+          var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
+          var displayNote = space.Note ? `<span class="badge-note" title="${space.Note}">📝</span>` : "";
+
+          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info"><div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div><div class="space-row-bottom">${displayPhone}${displayAmount}${displayNote}</div></div></div>`;
+        }
+        div.onclick = function() { openModal(space); };
+        grid.appendChild(div);
+      });
+      document.getElementById('status-msg').style.display = 'none';
+    }
+
+    function printReport() {
+        let printDiv = document.getElementById('print-area');
+        let periodStr = `民國 ${currentYear} 年 ${currentMonth}~${currentMonth+1} 月份`;
+        
+        let tableHtml = `<h2 style="text-align:center;">珠靈殿停車場 承租與繳費總表 (${periodStr})</h2>`;
+        tableHtml += `<table class="print-table"><tr><th>車位</th><th>承租人</th><th>車牌</th><th>電話</th><th>繳費金額</th><th>備註</th></tr>`;
+        
+        let receiptsHtml = `<div class="receipt-grid">`;
+        
+        globalSpaces.forEach(space => {
+            let name = space.Name || '';
+            let plate = space.LicensePlate || '';
+            let phone = space.Phone || '';
+            let amt = space.Amount || '';
+            let note = space.Note || '';
+            
+            tableHtml += `<tr><td><b>${space.SpaceID}</b></td><td>${name}</td><td>${plate}</td><td>${phone}</td><td>${amt}</td><td>${note}</td></tr>`;
+            
+            if (name !== '') {
+                let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? amt : '________');
+                let amtText = (amt === '3600') ? `新台幣 <b>參仟陸佰</b> 元整` : `新台幣 <b style="font-size:16px;">${displayAmt}</b> 元整`;
+                
+                receiptsHtml += `
+                <div class="receipt-card">
+                    <div class="r-title">珠靈殿管理委員會 收據</div>
+                    <div class="r-date">${periodStr}</div>
+                    <div class="r-body">
+                        茲收到 <b>${name}</b> 君<br><br>
+                        承租本殿停車場 <b>${space.SpaceID}</b> 號車位之清潔費<br><br>
+                        ${amtText}<br>
+                        <div style="text-align: right; margin-top: 15px;">此據</div>
+                    </div>
+                </div>`;
+            }
+        });
+        
+        tableHtml += `</table>`;
+        receiptsHtml += `</div>`;
+        
+        printDiv.innerHTML = tableHtml + `<div class="page-break"></div>` + receiptsHtml;
+        
+        setTimeout(() => { window.print(); }, 300);
+    }
+
+    function openModal(space) {
+      if (globalUserRole === 'viewer') {
+        alert("⚠️ 權限不足：您目前為「檢視者」，僅能查看車位狀態，無法進行修改！");
+        return; 
+      }
+
+      document.getElementById('modal-spaceId').value = space.SpaceID;
+      document.getElementById('modal-title').innerText = `管理車位：${space.SpaceID} 號`;
+      const select = document.getElementById('modal-name-select');
+      const customName = document.getElementById('modal-name-custom');
+      const phoneInput = document.getElementById('modal-phone');
+      const plateInput = document.getElementById('modal-plate');
+      
+      select.innerHTML = '<option value="">-- 請選擇客戶 --</option>';
+      globalCustomers.forEach(c => {
+         const opt = document.createElement('option');
+         opt.value = c.Name;
+         opt.text = c.Name;
+         opt.dataset.phone = c.Phone;
+         opt.dataset.plate = c.LicensePlate;
+         select.appendChild(opt);
+      });
+      select.innerHTML += '<option value="NEW">➕ 新增客戶 (手動輸入)</option>';
+      customName.style.display = 'none';
+
+      if (space.Status === "空位" || space.Status === "") {
+        document.getElementById('btn-leave').style.display = 'none';
+        document.getElementById('btn-save').innerText = '確定出租';
+        select.value = "";
+        phoneInput.value = "";
+        plateInput.value = "";
+        document.getElementById('modal-amount').value = "3600";
+        document.getElementById('modal-note').value = "";
+      } else {
+        document.getElementById('btn-leave').style.display = 'inline-block';
+        document.getElementById('btn-save').innerText = '儲存修改';
+        
+        let found = false;
+        for(let i=0; i<select.options.length; i++) {
+           if(select.options[i].value === space.Name) {
+              select.selectedIndex = i;
+              found = true; break;
+           }
+        }
+        if(!found) {
+           select.value = "NEW";
+           customName.style.display = 'block';
+           customName.value = space.Name;
+        }
+        phoneInput.value = space.Phone || "";
+        plateInput.value = space.LicensePlate || "";
+        document.getElementById('modal-amount').value = space.Amount || "";
+        document.getElementById('modal-note').value = space.Note || "";
+      }
+      document.getElementById('editModal').style.display = 'block';
+    }
+
+    function handleCustomerSelect() {
+       const select = document.getElementById('modal-name-select');
+       const customName = document.getElementById('modal-name-custom');
+       const phoneInput = document.getElementById('modal-phone');
+       const plateInput = document.getElementById('modal-plate');
+
+       if (select.value === "NEW") {
+          customName.style.display = 'block';
+          phoneInput.value = '';
+          plateInput.value = '';
+       } else if (select.value === "") {
+          customName.style.display = 'none';
+          phoneInput.value = '';
+          plateInput.value = '';
+       } else {
+          customName.style.display = 'none';
+          const selectedOption = select.options[select.selectedIndex];
+          phoneInput.value = selectedOption.dataset.phone || '';
+          plateInput.value = selectedOption.dataset.plate || '';
+       }
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    function saveData() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      var name = document.getElementById('modal-name-select').value;
+      if (name === "NEW") { name = document.getElementById('modal-name-custom').value.trim(); }
+      
+      var phone = document.getElementById('modal-phone').value;
+      var plate = document.getElementById('modal-plate').value;
+      var amount = document.getElementById('modal-amount').value.trim();
+      var note = document.getElementById('modal-note').value.trim();
+      
+      if (!name) { alert("請選擇或輸入姓名！"); return; }
+      closeModal();
+      sendUpdateRequest(spaceId, 'update', name, phone, plate, amount, note);
+    }
+
+    function leaveSpace() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      if(confirm(`確定要將 ${spaceId} 號車位退租，並清空客戶資料嗎？`)) {
+        closeModal();
+        sendUpdateRequest(spaceId, 'leave', '', '', '', '', '');
+      }
+    }
+
+    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '') {
+      document.getElementById('status-msg').style.display = 'block';
+      document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
+      
+      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, period: getPeriodString(), uid: globalUserId };
+      
+      try {
+        const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if(result.status === 'success') { alert(result.msg); loadData(); } 
+        else { alert("錯誤：" + result.msg); document.getElementById('status-msg').style.display = 'none'; }
+      } catch (err) { alert("連線失敗：" + err); document.getElementById('status-msg').style.display = 'none'; }
+    }
+
+    initAuth();
+  </script>
+</body>
+</html>
