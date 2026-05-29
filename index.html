@@ -82,4 +82,437 @@
       
       /* --- 1. U型平面總表 --- */
       .map-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; }
-      .map-grid { display: grid; grid-
+      .map-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 4px; width: 100%; }
+      .map-box { border: 1px solid #333; height: 90px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; background: #fff; overflow: hidden; }
+      .box-empty { border: 1px dashed #aaa; background: #f9f9f9; }
+      .box-id { width: 100%; background: #e9ecef !important; border-bottom: 1px solid #333; text-align: center; font-weight: bold; font-size: 14px; padding: 2px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .box-name { font-size: 15px; font-weight: bold; margin-top: 4px; white-space: nowrap; }
+      .box-plate { font-size: 11px; margin-top: 2px; }
+      .box-phone { font-size: 11px; margin-top: 1px; }
+      .box-unpaid { font-size: 12px; font-weight: bold; color: #000; border-top: 1px solid #000; width: 100%; text-align: center; margin-top: auto; background: #ddd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      
+      /* --- 2. 十字裁切直書收據 (2x2) --- */
+      .receipt-page { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; /* 切兩半 */
+        grid-template-rows: 1fr 1fr;    /* 切兩半 */
+        gap: 15mm; /* 留美工刀裁切縫隙 */
+        padding-top: 5mm; 
+      }
+      .receipt-card { 
+        border: 1.5px dashed #666; 
+        padding: 15px 25px; 
+        box-sizing: border-box; 
+        border-radius: 8px; 
+        
+        /* 啟動傳統直書模式 */
+        writing-mode: vertical-rl; 
+        text-orientation: upright; 
+        font-family: "DFKai-sb", "標楷體", serif; 
+        
+        display: flex; 
+        flex-direction: row; 
+        justify-content: space-between; /* 左右排版分開 */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="auth-screen">
+    <h1 id="auth-title">系統驗證中...</h1>
+    <p id="auth-desc">請稍候，正在讀取您的 LINE 身分資料</p>
+  </div>
+
+  <div id="main-app">
+    <div class="header-nav">
+      <button class="nav-btn" onclick="changePeriod(-1)">&#10094;</button>
+      <h2 id="period-title">民國 115年 5-6月</h2>
+      <button class="nav-btn" onclick="changePeriod(1)">&#10095;</button>
+      <button class="nav-btn" onclick="printReport()" style="background-color: #17a2b8; width: auto; padding: 0 15px; border-radius: 12px; font-size: 18px; margin-left: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">🖨️ 列印報表</button>
+    </div>
+
+    <div id="status-msg">資料載入中，請稍候...</div>
+    <div id="parking-grid" class="grid-container"></div>
+
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <h3 id="modal-title">車位編輯</h3>
+        <input type="hidden" id="modal-spaceId">
+        
+        <div class="input-group">
+          <label>客戶姓名：</label>
+          <select id="modal-name-select" onchange="handleCustomerSelect()"></select>
+          <input type="text" id="modal-name-custom" placeholder="請輸入新客戶姓名" style="display:none; margin-top:8px;">
+        </div>
+        <div class="input-group">
+          <label>車牌：</label>
+          <input type="text" id="modal-plate" placeholder="請輸入車牌 (選填)">
+        </div>
+        <div class="input-group">
+          <label>電話：</label>
+          <input type="text" id="modal-phone" placeholder="請輸入電話 (選填)">
+        </div>
+        
+        <div class="input-group">
+          <label>繳費金額：</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="modal-amount" placeholder="留空代表未繳費" style="flex: 1;">
+            <button type="button" onclick="document.getElementById('modal-amount').value='3600'" style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; white-space: nowrap;">💰 3600</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>備註 (選填)：</label>
+          <input type="text" id="modal-note" placeholder="例如: 5/15起租，單日計算">
+        </div>
+        
+        <div class="btn-row">
+          <button class="btn btn-save" id="btn-save" onclick="saveData()">儲存</button>
+          <button class="btn btn-leave" id="btn-leave" onclick="leaveSpace()">退租</button>
+          <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="copyModal" class="modal">
+      <div class="modal-content" style="max-width: 350px;">
+        <h3 style="color: #007bff; font-size: 28px;">💡 系統提示</h3>
+        <p style="font-size: 22px; text-align: center; font-weight: bold; line-height: 1.6; margin: 25px 0; color: #333;">
+          發現這是一個全新月份的空白帳本！<br><br>
+          <span style="color: #dc3545;">請問是否要一鍵匯入「上個月」的所有租客資料？</span>
+        </p>
+        <div class="btn-row">
+          <button class="btn btn-save" onclick="confirmCopy()" style="font-size: 22px; padding: 15px;">確定匯入</button>
+          <button class="btn btn-cancel" onclick="closeCopyModal()" style="font-size: 22px; padding: 15px; margin-left: 10px;">先不要</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="print-area" style="display: none;"></div>
+
+  <script>
+    const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
+    // GAS 網址已經幫你填好
+    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
+
+    let currentYear = 115;
+    let currentMonth = 5; 
+    let globalCustomers = []; 
+    let globalSpaces = []; 
+    let globalUserRole = "none"; 
+    let globalUserId = ""; 
+    let pendingTargetPeriod = "";
+    let pendingSourcePeriod = "";
+
+    let pressTimer;
+    function startPress(e, phone) {
+      e.stopPropagation(); 
+      pressTimer = setTimeout(function() { window.location.href = "tel:" + phone; }, 2000); 
+    }
+    function cancelPress(e) { if(e) e.stopPropagation(); clearTimeout(pressTimer); }
+
+    function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
+
+    async function initAuth() {
+      try {
+        await liff.init({ liffId: MY_LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        const profile = await liff.getProfile();
+        globalUserId = profile.userId; 
+
+        const response = await fetch(MY_GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: globalUserId }) });
+        const result = await response.json();
+
+        if (result.role === 'admin' || result.role === 'viewer') {
+           globalUserRole = result.role;
+           document.getElementById('auth-screen').style.display = 'none';
+           document.getElementById('main-app').style.display = 'block';
+           loadData(); 
+        } else {
+           document.getElementById('auth-title').innerText = "⛔ 無存取權限";
+           document.getElementById('auth-title').style.color = "#dc3545";
+           document.getElementById('auth-desc').innerHTML = `您尚未被開通此系統的使用權限。<br><br>請將下方您的專屬 ID 長按複製，<br>並傳送給系統管理員：<div class="uid-box">${globalUserId}</div>`;
+        }
+      } catch (err) {
+        document.getElementById('auth-title').innerText = "連線失敗";
+        document.getElementById('auth-desc').innerText = err;
+      }
+    }
+
+    function changePeriod(direction) {
+      currentMonth += direction * 2;
+      if (currentMonth > 11) { currentMonth = 1; currentYear++; } 
+      else if (currentMonth < 1) { currentMonth = 11; currentYear--; }
+      document.getElementById('period-title').innerText = `民國 ${currentYear}年 ${currentMonth}-${currentMonth+1}月`;
+      loadData(); 
+    }
+
+    async function loadData() {
+      document.getElementById('status-msg').style.display = 'block';
+      try {
+        const response = await fetch(`${MY_GAS_URL}?period=${getPeriodString()}`);
+        const payload = await response.json(); 
+        globalCustomers = payload.customers; 
+        globalSpaces = payload.spaces; 
+        renderGrid(globalSpaces);          
+        
+        if (payload.isNewSheet && globalUserRole === 'admin') {
+            let prevMonth = currentMonth - 2;
+            let prevYear = currentYear;
+            if (prevMonth < 1) { prevMonth = 11; prevYear--; }
+            let prevPeriodStr = `${prevYear}_${prevMonth}-${prevMonth+1}`;
+            
+            pendingTargetPeriod = getPeriodString();
+            pendingSourcePeriod = prevPeriodStr;
+            document.getElementById('copyModal').style.display = 'block';
+        }
+      } catch (err) { document.getElementById('status-msg').innerText = "載入失敗：" + err; }
+    }
+
+    function closeCopyModal() { document.getElementById('copyModal').style.display = 'none'; }
+    function confirmCopy() { closeCopyModal(); copyPreviousData(pendingTargetPeriod, pendingSourcePeriod); }
+
+    async function copyPreviousData(targetPeriod, sourcePeriod) {
+        document.getElementById('status-msg').innerText = "資料匯入中，請稍候...";
+        var payload = { action: 'copy_period', targetPeriod: targetPeriod, sourcePeriod: sourcePeriod, uid: globalUserId };
+        try {
+            const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if(result.status === 'success') { alert(result.msg); loadData(); } 
+            else { alert("錯誤：" + result.msg); }
+        } catch (err) { alert("連線失敗：" + err); }
+    }
+
+    function renderGrid(data) {
+      const grid = document.getElementById('parking-grid');
+      grid.innerHTML = ''; 
+      data.forEach(space => {
+        const div = document.createElement('div');
+        div.className = 'parking-space';
+        if (space.Status === "空位" || space.Status === "") {
+          div.classList.add('status-empty');
+          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info" style="justify-content: center;"><span style="font-size: 26px; color: #888;">空位</span></div></div>`;
+        } else {
+          var isPaid = space.Amount && space.Amount.toString().trim() !== "";
+          if (isPaid) { div.classList.add('status-paid'); } else { div.classList.add('status-unpaid'); }
+          var displayName = space.Name ? space.Name : "未填寫";
+          var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
+          var displayPhone = space.Phone ? `<span class="phone-link" onmousedown="startPress(event, '${space.Phone}')" onmouseup="cancelPress(event)" onmouseleave="cancelPress(event)" ontouchstart="startPress(event, '${space.Phone}')" ontouchend="cancelPress(event)" ontouchmove="cancelPress(event)" onclick="event.stopPropagation();">${space.Phone}</span>` : "無電話";
+          var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
+          var displayNote = space.Note ? `<span class="badge-note" title="${space.Note}">📝</span>` : "";
+          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info"><div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div><div class="space-row-bottom">${displayPhone}${displayAmount}${displayNote}</div></div></div>`;
+        }
+        div.onclick = function() { openModal(space); };
+        grid.appendChild(div);
+      });
+      document.getElementById('status-msg').style.display = 'none';
+    }
+
+    function toChineseAmt(numStr) {
+        if (!numStr) return '________';
+        let str = numStr.toString().trim();
+        if (isNaN(str) || str === '') return str;
+        const zh = ['零','壹','貳','參','肆','伍','陸','柒','捌','玖'];
+        const unit = ['','拾','佰','仟','萬'];
+        let res = '';
+        for(let i=0; i<str.length; i++) {
+            let n = parseInt(str[i]);
+            let u = str.length - 1 - i;
+            if (n !== 0) res += zh[n] + unit[u];
+            else if (res.slice(-1) !== '零') res += '零';
+        }
+        res = res.replace(/零$/, '');
+        return res;
+    }
+
+    // 🌟 終極列印功能：精準網格復刻 + 直書四等分 🌟
+    function printReport() {
+        if (!globalSpaces || globalSpaces.length === 0) {
+            alert("⚠️ 資料尚未載入完成，請稍等幾秒鐘後再按列印！");
+            return;
+        }
+
+        let printDiv = document.getElementById('print-area');
+        let mainApp = document.getElementById('main-app');
+        let periodStr = `民國 ${currentYear} 年 ${currentMonth}~${currentMonth+1} 月份`;
+        
+        // --- 第一頁：U型地理位置平面總表 ---
+        const topLayout = ['15', '13', '12', '11', '10', '9', '8', '7', '6', '5', '3', '2', '1'];
+        const bottomLayout = ['16', '17', '18', '19', '20', '21', '22', '23', '25', '26'];
+        
+        function getBox(id) {
+           if(!id) return '';
+           let s = globalSpaces.find(x => x.SpaceID == id);
+           if(!s || !s.Name) return `<div class="map-box box-empty"><div class="box-id">${id}</div></div>`;
+           let isUnpaid = (!s.Amount || s.Amount.toString().trim() === '');
+           let unpaidHtml = isUnpaid ? `<div class="box-unpaid">未繳費</div>` : '';
+           return `<div class="map-box">
+             <div class="box-id">${s.SpaceID}</div>
+             <div class="box-name">${s.Name}</div>
+             <div class="box-plate">${s.LicensePlate || ''}</div>
+             <div class="box-phone">${s.Phone || ''}</div>
+             ${unpaidHtml}
+           </div>`;
+        }
+
+        let mapHtml = `
+        <div class="print-page">
+            <div class="map-title">珠靈殿停車場 位置與繳費總表 (${periodStr})</div>
+            <div class="map-grid">
+                ${topLayout.map(id => getBox(id)).join('')}
+                <div style="grid-column: span 12;"></div>${getBox('39-2')}
+                ${bottomLayout.map(id => getBox(id)).join('')}
+                <div style="grid-column: span 2;"></div>${getBox('39-1')}
+            </div>
+        </div>`;
+        
+        // --- 第二頁起：十字裁切直書收據 (2x2) ---
+        let receiptsHtml = '';
+        let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
+        
+        for (let i = 0; i < validSpaces.length; i += 4) {
+            let group = validSpaces.slice(i, i + 4);
+            receiptsHtml += `<div class="print-page receipt-page">`;
+            
+            group.forEach(space => {
+                let name = space.Name || '';
+                let amt = space.Amount || '';
+                let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
+                let amtText = `新台幣 <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 22px; font-weight: bold; margin: 8px 0;">${displayAmt}</span> 元整`;
+                
+                // 這裡的排版完全遵循「由右至左、由上至下」的正宗直書邏輯
+                receiptsHtml += `
+                <div class="receipt-card">
+                    <div style="display: flex; gap: 20px;">
+                        <div style="font-size: 22px; letter-spacing: 2px;">茲收到 <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 24px; font-weight: bold; margin: 8px 0;">${name}</span> 君</div>
+                        <div style="font-size: 16px; letter-spacing: 1px;">承租本殿停車場 <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 22px; font-weight: bold; margin: 8px 0;">${space.SpaceID}</span> 號車位之清潔費</div>
+                        <div style="font-size: 18px; letter-spacing: 1px;">${amtText}</div>
+                    </div>
+                    <div style="display: flex; gap: 25px; align-items: flex-end;">
+                        <div style="font-size: 20px; font-weight: bold; letter-spacing: 3px;">珠靈殿管理委員會　此據</div>
+                        <div style="font-size: 14px;">中華民國 <span style="font-family: sans-serif; font-weight: bold;">115</span> 年 <span style="font-family: sans-serif; font-weight: bold;">${currentMonth}~${currentMonth+1}</span> 月份</div>
+                    </div>
+                </div>`;
+            });
+            receiptsHtml += `</div>`;
+        }
+        
+        // 合併列印
+        printDiv.innerHTML = mapHtml + receiptsHtml;
+        
+        mainApp.style.display = 'none';
+        printDiv.style.display = 'block';
+        
+        setTimeout(() => { 
+            window.print(); 
+            printDiv.style.display = 'none';
+            mainApp.style.display = 'block';
+        }, 500);
+    }
+
+    function openModal(space) {
+      if (globalUserRole === 'viewer') {
+        alert("⚠️ 權限不足：您目前為「檢視者」，僅能查看車位狀態，無法進行修改！");
+        return; 
+      }
+      document.getElementById('modal-spaceId').value = space.SpaceID;
+      document.getElementById('modal-title').innerText = `管理車位：${space.SpaceID} 號`;
+      const select = document.getElementById('modal-name-select');
+      const customName = document.getElementById('modal-name-custom');
+      const phoneInput = document.getElementById('modal-phone');
+      const plateInput = document.getElementById('modal-plate');
+      
+      select.innerHTML = '<option value="">-- 請選擇客戶 --</option>';
+      globalCustomers.forEach(c => {
+         const opt = document.createElement('option');
+         opt.value = c.Name;
+         opt.text = c.Name;
+         opt.dataset.phone = c.Phone;
+         opt.dataset.plate = c.LicensePlate;
+         select.appendChild(opt);
+      });
+      select.innerHTML += '<option value="NEW">➕ 新增客戶 (手動輸入)</option>';
+      customName.style.display = 'none';
+
+      if (space.Status === "空位" || space.Status === "") {
+        document.getElementById('btn-leave').style.display = 'none';
+        document.getElementById('btn-save').innerText = '確定出租';
+        select.value = "";
+        phoneInput.value = "";
+        plateInput.value = "";
+        document.getElementById('modal-amount').value = "3600";
+        document.getElementById('modal-note').value = "";
+      } else {
+        document.getElementById('btn-leave').style.display = 'inline-block';
+        document.getElementById('btn-save').innerText = '儲存修改';
+        let found = false;
+        for(let i=0; i<select.options.length; i++) {
+           if(select.options[i].value === space.Name) { select.selectedIndex = i; found = true; break; }
+        }
+        if(!found) { select.value = "NEW"; customName.style.display = 'block'; customName.value = space.Name; }
+        phoneInput.value = space.Phone || "";
+        plateInput.value = space.LicensePlate || "";
+        document.getElementById('modal-amount').value = space.Amount || "";
+        document.getElementById('modal-note').value = space.Note || "";
+      }
+      document.getElementById('editModal').style.display = 'block';
+    }
+
+    function handleCustomerSelect() {
+       const select = document.getElementById('modal-name-select');
+       const customName = document.getElementById('modal-name-custom');
+       const phoneInput = document.getElementById('modal-phone');
+       const plateInput = document.getElementById('modal-plate');
+       if (select.value === "NEW") {
+          customName.style.display = 'block'; phoneInput.value = ''; plateInput.value = '';
+       } else if (select.value === "") {
+          customName.style.display = 'none'; phoneInput.value = ''; plateInput.value = '';
+       } else {
+          customName.style.display = 'none';
+          const selectedOption = select.options[select.selectedIndex];
+          phoneInput.value = selectedOption.dataset.phone || '';
+          plateInput.value = selectedOption.dataset.plate || '';
+       }
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    function saveData() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      var name = document.getElementById('modal-name-select').value;
+      if (name === "NEW") { name = document.getElementById('modal-name-custom').value.trim(); }
+      var phone = document.getElementById('modal-phone').value;
+      var plate = document.getElementById('modal-plate').value;
+      var amount = document.getElementById('modal-amount').value.trim();
+      var note = document.getElementById('modal-note').value.trim();
+      
+      if (!name) { alert("請選擇或輸入姓名！"); return; }
+      closeModal();
+      sendUpdateRequest(spaceId, 'update', name, phone, plate, amount, note);
+    }
+
+    function leaveSpace() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      if(confirm(`確定要將 ${spaceId} 號車位退租，並清空客戶資料嗎？`)) {
+        closeModal();
+        sendUpdateRequest(spaceId, 'leave', '', '', '', '', '');
+      }
+    }
+
+    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '') {
+      document.getElementById('status-msg').style.display = 'block';
+      document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
+      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, period: getPeriodString(), uid: globalUserId };
+      try {
+        const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if(result.status === 'success') { alert(result.msg); loadData(); } 
+        else { alert("錯誤：" + result.msg); document.getElementById('status-msg').style.display = 'none'; }
+      } catch (err) { alert("連線失敗：" + err); document.getElementById('status-msg').style.display = 'none'; }
+    }
+
+    initAuth();
+  </script>
+</body>
+</html>
