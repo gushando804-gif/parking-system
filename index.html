@@ -33,27 +33,14 @@
     .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
     .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 6px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
-    
     .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 6px; font-size: 21px; letter-spacing: 0px; flex: 1; white-space: nowrap; overflow: hidden; }
     
     .info-name { font-size: 26px; font-weight: bold; }
     .info-plate { font-size: 26px; opacity: 0.8; margin-left: 26px; text-overflow: ellipsis; }
-    
     .badge-amount { margin-left: 8px; font-weight: bold; font-size: 20px; }
     .badge-note { margin-left: 8px; font-size: 20px; }
     
-    /* 🌟 修改：點擊撥號的連結樣式 (加入防止選取與彈出選單的防呆) 🌟 */
-    .phone-link { 
-      color: inherit; 
-      text-decoration: underline; 
-      text-decoration-style: dotted; 
-      text-underline-offset: 4px; 
-      cursor: pointer; 
-      /* 防止長按時跳出預設的文字反白或拷貝選單 */
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-    }
+    .phone-link { color: inherit; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 4px; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     .phone-link:active { opacity: 0.6; color: #007bff; }
 
     @media (min-width: 768px) {
@@ -80,6 +67,28 @@
     .btn-save { background-color: #007bff; color: white; flex-grow: 1; margin-right: 10px; }
     .btn-leave { background-color: #dc3545; color: white; display: none; }
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
+
+    /* 🌟 列印專屬排版 CSS (當按下 Ctrl+P 或列印時才會啟動) 🌟 */
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; color: #000; font-family: "Microsoft JhengHei", sans-serif; }
+      
+      /* 總表樣式 */
+      .print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 16px; }
+      .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: center; }
+      .print-table th { background-color: #e9ecef !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      
+      /* 強制換頁 */
+      .page-break { page-break-before: always; }
+      
+      /* 收據網格排版 (一排三張) */
+      .receipt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+      .receipt-card { border: 2px dashed #666; padding: 15px; border-radius: 8px; font-size: 16px; line-height: 1.8; break-inside: avoid; }
+      .r-title { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 8px;}
+      .r-date { text-align: center; font-size: 16px; margin-bottom: 15px; }
+      .r-body { font-size: 18px; }
+    }
   </style>
 </head>
 <body>
@@ -94,10 +103,14 @@
       <button class="nav-btn" onclick="changePeriod(-1)">&#10094;</button>
       <h2 id="period-title">民國 115年 5-6月</h2>
       <button class="nav-btn" onclick="changePeriod(1)">&#10095;</button>
+      
+      <button class="nav-btn" onclick="printReport()" style="background-color: #17a2b8; width: auto; padding: 0 15px; border-radius: 12px; font-size: 18px; margin-left: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">🖨️ 列印</button>
     </div>
 
     <div id="status-msg">資料載入中，請稍候...</div>
     <div id="parking-grid" class="grid-container"></div>
+
+    <div id="print-area" style="display: none;"></div>
 
     <div id="editModal" class="modal">
       <div class="modal-content">
@@ -156,28 +169,28 @@
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // ⚠️ 貼回你的 GAS 網址 ⚠️
-    const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
+    // ⚠️ 請在這裡貼回你的 GAS 網址 ⚠️
+    const MY_GAS_URL = "請在這裡貼上你的_GAS_網址";
 
     let currentYear = 115;
     let currentMonth = 5; 
     let globalCustomers = []; 
+    let globalSpaces = []; // 🌟 新增：將車位資料存起來供列印使用
     let globalUserRole = "none"; 
     let globalUserId = ""; 
     let pendingTargetPeriod = "";
     let pendingSourcePeriod = "";
 
-    // 🌟 核心：長按 2 秒撥號的計時器邏輯 🌟
     let pressTimer;
     function startPress(e, phone) {
-      e.stopPropagation(); // 防止點擊事件擴散去打開編輯視窗
+      e.stopPropagation(); 
       pressTimer = setTimeout(function() {
-        window.location.href = "tel:" + phone; // 滿2秒後觸發撥號
-      }, 2000); // 這裡的 2000 代表 2000毫秒 (2秒)，覺得太久可以改成 1500
+        window.location.href = "tel:" + phone; 
+      }, 2000); 
     }
     function cancelPress(e) {
       if(e) e.stopPropagation();
-      clearTimeout(pressTimer); // 手指離開或滑動時，立刻取消計時
+      clearTimeout(pressTimer); 
     }
 
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
@@ -232,7 +245,8 @@
         const response = await fetch(`${MY_GAS_URL}?period=${getPeriodString()}`);
         const payload = await response.json(); 
         globalCustomers = payload.customers; 
-        renderGrid(payload.spaces);          
+        globalSpaces = payload.spaces; // 🌟 儲存供列印讀取
+        renderGrid(globalSpaces);          
         
         if (payload.isNewSheet && globalUserRole === 'admin') {
             let prevMonth = currentMonth - 2;
@@ -274,19 +288,11 @@
           div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info" style="justify-content: center;"><span style="font-size: 26px; color: #888;">空位</span></div></div>`;
         } else {
           var isPaid = space.Amount && space.Amount.toString().trim() !== "";
-          
-          if (isPaid) {
-            div.classList.add('status-paid');
-          } else {
-            div.classList.add('status-unpaid');
-          }
+          if (isPaid) { div.classList.add('status-paid'); } else { div.classList.add('status-unpaid'); }
 
           var displayName = space.Name ? space.Name : "未填寫";
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
-          
-          // 🌟 修改：將電話加入各種觸控事件，觸發「點住兩秒」的功能 🌟
           var displayPhone = space.Phone ? `<span class="phone-link" onmousedown="startPress(event, '${space.Phone}')" onmouseup="cancelPress(event)" onmouseleave="cancelPress(event)" ontouchstart="startPress(event, '${space.Phone}')" ontouchend="cancelPress(event)" ontouchmove="cancelPress(event)" onclick="event.stopPropagation();">${space.Phone}</span>` : "無電話";
-          
           var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
           var displayNote = space.Note ? `<span class="badge-note" title="${space.Note}">📝</span>` : "";
 
@@ -296,6 +302,57 @@
         grid.appendChild(div);
       });
       document.getElementById('status-msg').style.display = 'none';
+    }
+
+    // 🌟 核心功能：動態生成總表與收據並呼叫列印 🌟
+    function printReport() {
+        let printDiv = document.getElementById('print-area');
+        let periodStr = `民國 ${currentYear} 年 ${currentMonth}~${currentMonth+1} 月份`;
+        
+        // 1. 產生清單總表 HTML
+        let tableHtml = `<h2 style="text-align:center;">珠靈殿停車場 承租與繳費總表 (${periodStr})</h2>`;
+        tableHtml += `<table class="print-table"><tr><th>車位</th><th>承租人</th><th>車牌</th><th>電話</th><th>繳費金額</th><th>備註</th></tr>`;
+        
+        let receiptsHtml = `<div class="receipt-grid">`;
+        
+        globalSpaces.forEach(space => {
+            let name = space.Name || '';
+            let plate = space.LicensePlate || '';
+            let phone = space.Phone || '';
+            let amt = space.Amount || '';
+            let note = space.Note || '';
+            
+            // 填入總表
+            tableHtml += `<tr><td><b>${space.SpaceID}</b></td><td>${name}</td><td>${plate}</td><td>${phone}</td><td>${amt}</td><td>${note}</td></tr>`;
+            
+            // 2. 如果該車位有人租，自動產生一張收據
+            if (name !== '') {
+                // 智慧判斷金額：如果是 3600 就轉中文大寫，如果有其他金額就顯示，如果沒填就畫底線
+                let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? amt : '________');
+                let amtText = (amt === '3600') ? `新台幣 <b>參仟陸佰</b> 元整` : `新台幣 <b>${displayAmt}</b> 元整`;
+                
+                receiptsHtml += `
+                <div class="receipt-card">
+                    <div class="r-title">珠靈殿管理委員會 收據</div>
+                    <div class="r-date">${periodStr}</div>
+                    <div class="r-body">
+                        茲收到 <b>${name}</b> 君<br><br>
+                        承租本殿停車場 <b>${space.SpaceID}</b> 號車位之清潔費<br><br>
+                        ${amtText}<br>
+                        <div style="text-align: right; margin-top: 20px;">此據</div>
+                    </div>
+                </div>`;
+            }
+        });
+        
+        tableHtml += `</table>`;
+        receiptsHtml += `</div>`;
+        
+        // 將總表與收據組合 (中間加入強制換頁的 page-break)
+        printDiv.innerHTML = tableHtml + `<div class="page-break"></div>` + receiptsHtml;
+        
+        // 呼叫系統原生的列印功能
+        window.print();
     }
 
     function openModal(space) {
