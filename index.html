@@ -69,47 +69,45 @@
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
     /* =========================================
-       🖨️ 終極列印排版：橫向 A4 完美防呆
+       🖨️ 終極列印排版：完美復刻 Excel (橫向A4)
        ========================================= */
     @media print {
-      /* 強制設定全文件為 A4 橫向 (Landscape) */
       @page { size: A4 landscape; margin: 8mm; } 
-      
       body * { visibility: hidden; }
       #print-area, #print-area * { visibility: visible; }
       #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; color: #000; font-family: "Microsoft JhengHei", sans-serif; }
       
-      /* 定義每一張 A4 紙的範圍 */
       .print-page { page-break-after: always; width: 100%; height: 190mm; box-sizing: border-box; }
       
-      /* --- 1. 總表位置圖 --- */
+      /* --- 1. 完美復刻：總表位置圖 --- */
       .map-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; }
-      .map-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 4px; width: 100%; }
-      .map-box { border: 1px solid #333; height: 85px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; background: #fff; overflow: hidden; }
-      .box-spacer { grid-column: span 12; }
-      .empty-box { background: #f9f9f9; border: 1px dashed #aaa; }
-      .box-id { width: 100%; background: #e9ecef !important; border-bottom: 1px solid #333; text-align: center; font-weight: bold; font-size: 14px; padding: 2px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .box-name { font-size: 14px; font-weight: bold; margin-top: 3px; white-space: nowrap; }
-      .box-plate { font-size: 11px; margin-top: 2px; }
-      .box-phone { font-size: 11px; margin-top: 1px; }
-      .box-unpaid { font-size: 12px; font-weight: bold; color: #000; border-top: 1px solid #000; width: 100%; text-align: center; margin-top: auto; background: #ddd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .excel-map { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; table-layout: fixed; }
+      .excel-map td { border: 1px solid #000; padding: 4px; overflow: hidden; white-space: nowrap; height: 25px; }
+      .excel-map .m-id { font-weight: bold; font-size: 16px; background: #e9ecef !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .excel-map .m-name { font-weight: bold; color: #000; font-size: 15px; }
+      .excel-map .m-plate { color: #333; font-size: 11px; }
+      .excel-map .m-phone { color: #333; font-size: 11px; }
+      .excel-map .m-empty { border: none !important; background: transparent !important; }
+      .excel-map .m-unpaid { color: #dc3545; font-weight: bold; font-size: 12px; display: block; }
       
-      /* --- 2. 十字裁切收據 (一頁 4 格, 2x2) --- */
-      .receipt-page { 
-        display: grid; 
-        grid-template-columns: 1fr 1fr; /* 橫向切兩半 */
-        grid-template-rows: 1fr 1fr;    /* 縱向切兩半 */
-        gap: 10mm; /* 中間留縫隙方便下刀 */
-        padding-top: 5mm; 
-      }
+      /* --- 2. 完美復刻：十字裁切收據 (一頁 4 格, 2x2) --- */
+      .receipt-page { display: block; padding-top: 5mm; }
       .receipt-card { 
-        border: 2px dashed #666; 
-        padding: 20px; 
-        display: flex; 
-        flex-direction: column; 
-        box-sizing: border-box; 
-        border-radius: 8px; 
+        float: left; width: 48%; height: 48%; margin: 1%; 
+        border: 1px dashed #aaa; padding: 6mm 5mm; 
+        box-sizing: border-box; position: relative; 
+        font-family: "Microsoft JhengHei", sans-serif; font-size: 14px; 
       }
+      .receipt-card:nth-child(4n) { page-break-after: always; } 
+      .receipt-page::after { content: ""; display: table; clear: both; } 
+      
+      /* 用精準的 CSS 絕對定位，還原你 Excel 的視覺排版 */
+      .r-line { position: relative; height: 6.66%; width: 100%; }
+      .c-left { position: absolute; left: 5%; }
+      .c-left2 { position: absolute; left: 20%; }
+      .c-mid { position: absolute; left: 45%; font-weight: bold; font-size: 16px; }
+      .c-right2 { position: absolute; right: 20%; }
+      .c-right { position: absolute; right: 5%; }
     }
   </style>
 </head>
@@ -189,7 +187,7 @@
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // GAS 網址已經幫你填好了
+    // GAS 網址已完美填入
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
     let currentYear = 115;
@@ -323,7 +321,7 @@
         return res;
     }
 
-    // 🌟 終極列印功能：強迫症友善排版 🌟
+    // 🌟 終極列印功能：100% 復刻 Excel 版型 🌟
     function printReport() {
         if (!globalSpaces || globalSpaces.length === 0) {
             alert("⚠️ 資料尚未載入完成，請稍等幾秒鐘後再按列印！");
@@ -334,40 +332,49 @@
         let mainApp = document.getElementById('main-app');
         let periodStr = `民國 ${currentYear} 年 ${currentMonth}~${currentMonth+1} 月份`;
         
-        // --- 1. 第一頁：寬闊的橫向總表 ---
-        const topLayout = ['15', '13', '12', '11', '10', '9', '8', '7', '6', '5', '3', '2', '1'];
-        const bottomLayout = ['16', '17', '18', '19', '20', '21', '22', '23', '25', '26'];
-        
-        function getBox(id) {
+        // --- 1. 第一頁：完美還原 Excel 總表 (一整個橫向表格) ---
+        const topIds = ['15','13','12','11','10','9','8','7','6','5','3','2','1'];
+        const botIds = ['16','17','18','19','20','21','22','23','25','26','','',''];
+
+        function getVal(id, prop) {
+           if(!id) return '';
            let s = globalSpaces.find(x => x.SpaceID == id);
-           if(!s || !s.Name) return `<div class="map-box empty-box"><div class="box-id">${id}</div></div>`;
-           let isUnpaid = (!s.Amount || s.Amount.toString().trim() === '');
-           let unpaidHtml = isUnpaid ? `<div class="box-unpaid">未繳費</div>` : '';
-           return `<div class="map-box">
-             <div class="box-id">${s.SpaceID}</div>
-             <div class="box-name">${s.Name}</div>
-             <div class="box-plate">${s.LicensePlate || ''}</div>
-             <div class="box-phone">${s.Phone || ''}</div>
-             ${unpaidHtml}
-           </div>`;
+           if(!s) return '';
+           if(prop === 'Amt') {
+              if(s.Name && (!s.Amount || s.Amount.toString().trim() === '')) return '<span class="m-unpaid">(未繳費)</span>';
+              return '';
+           }
+           return s[prop] || '';
         }
 
-        let mapHtml = `
-        <div class="print-page">
-            <div class="map-title">珠靈殿停車場 位置與繳費總表 (${periodStr})</div>
-            <div class="map-grid">
-                ${topLayout.map(id => getBox(id)).join('')}
-                <div class="box-spacer"></div>${getBox('39-2')}
-                <div class="box-spacer"></div>${getBox('39-1')}
-                ${bottomLayout.map(id => getBox(id)).join('')}
-            </div>
-        </div>`;
+        let mapHtml = `<div class="print-page">`;
+        mapHtml += `<div class="map-title">珠靈殿停車場 位置與繳費總表 (${periodStr})</div>`;
+        mapHtml += `<table class="excel-map">`;
+
+        // 上排：15 ~ 1
+        mapHtml += `<tr>` + topIds.map(id => `<td class="m-id">${id}</td>`).join('') + `<td class="m-empty" colspan="2"></td></tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td><div class="m-name">${getVal(id,'Name')}</div>${getVal(id,'Amt')}</td>`).join('') + `<td class="m-empty" colspan="2"></td></tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="m-plate">${getVal(id,'LicensePlate')}</td>`).join('') + `<td class="m-empty" colspan="2"></td></tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="m-phone">${getVal(id,'Phone')}</td>`).join('') + `<td class="m-empty" colspan="2"></td></tr>`;
+
+        // 中間車道 + 右側 39-2
+        mapHtml += `<tr><td colspan="13" class="m-empty"></td><td class="m-name">${getVal('39-2','Name')}<br>${getVal('39-2','Amt')}</td><td class="m-id">39-2</td></tr>`;
+        mapHtml += `<tr><td colspan="13" class="m-empty"></td><td class="m-plate">${getVal('39-2','LicensePlate')}</td><td class="m-empty"></td></tr>`;
+        mapHtml += `<tr><td colspan="13" class="m-empty"></td><td class="m-phone">${getVal('39-2','Phone')}</td><td class="m-empty"></td></tr>`;
+        mapHtml += `<tr><td colspan="15" class="m-empty" style="height:10px;"></td></tr>`;
+
+        // 下排：16 ~ 26 + 右側 39-1
+        mapHtml += `<tr>` + botIds.map(id => id ? `<td class="m-id">${id}</td>` : `<td class="m-empty"></td>`).join('') + `<td class="m-name">${getVal('39-1','Name')}<br>${getVal('39-1','Amt')}</td><td class="m-id">39-1</td></tr>`;
+        mapHtml += `<tr>` + botIds.map(id => id ? `<td><div class="m-name">${getVal(id,'Name')}</div>${getVal(id,'Amt')}</td>` : `<td class="m-empty"></td>`).join('') + `<td class="m-plate">${getVal('39-1','LicensePlate')}</td><td class="m-empty"></td></tr>`;
+        mapHtml += `<tr>` + botIds.map(id => id ? `<td class="m-plate">${getVal(id,'LicensePlate')}</td>` : `<td class="m-empty"></td>`).join('') + `<td class="m-phone">${getVal('39-1','Phone')}</td><td class="m-empty"></td></tr>`;
+        mapHtml += `<tr>` + botIds.map(id => id ? `<td class="m-phone">${getVal(id,'Phone')}</td>` : `<td class="m-empty"></td>`).join('') + `<td class="m-empty" colspan="2"></td></tr>`;
+
+        mapHtml += `</table></div>`;
         
-        // --- 2. 第二頁起：十字裁切 2x2 收據 ---
+        // --- 2. 第二頁起：完美復刻 Excel 排版的四格收據 ---
         let receiptsHtml = '';
         let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
         
-        // 每 4 張收據為一組，放入一個 print-page (強制換頁)
         for (let i = 0; i < validSpaces.length; i += 4) {
             let group = validSpaces.slice(i, i + 4);
             receiptsHtml += `<div class="print-page receipt-page">`;
@@ -376,23 +383,26 @@
                 let name = space.Name || '';
                 let amt = space.Amount || '';
                 let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
-                let amtText = `新台幣 <b style="font-size: 20px;">${displayAmt}</b> 元整`;
                 
                 receiptsHtml += `
                 <div class="receipt-card">
-                    <div style="text-align:center; font-size: 22px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 10px;">珠靈殿管理委員會 收據</div>
-                    <div style="font-size: 18px; line-height: 2.2; flex-grow: 1;">
-                        茲收到 <b style="font-size: 22px;">${name}</b> 君<br>
-                        承租本殿停車場 <b style="font-size: 22px;">${space.SpaceID}</b> 號車位之清潔費<br>
-                        ${amtText}
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; font-size: 16px;">
-                        <div>中華民國 <b>115</b> 年 <b>${currentMonth}~${currentMonth+1}</b> 月份</div>
-                        <div style="font-size: 22px; font-weight: bold;">此據</div>
-                    </div>
+                   <div class="r-line"><span class="c-mid">${name}</span><span class="c-right">茲收到</span></div>
+                   <div class="r-line"><span class="c-left">中華民國</span></div>
+                   <div class="r-line"><span class="c-mid">${space.SpaceID}</span></div>
+                   <div class="r-line"><span class="c-left2">珠靈殿管理委員會</span><span class="c-right2">此據</span></div>
+                   <div class="r-line"><span class="c-mid">號車位之清潔費</span><span class="c-right">君</span></div>
+                   <div class="r-line"><span class="c-left2">新台幣 <b style="font-size:16px;">${displayAmt}</b> 元整</span><span class="c-right">承</span></div>
+                   <div class="r-line"><span class="c-right">租</span></div>
+                   <div class="r-line"><span class="c-left">115</span><span class="c-right">本</span></div>
+                   <div class="r-line"><span class="c-left">年</span><span class="c-right">殿</span></div>
+                   <div class="r-line"><span class="c-right">停</span></div>
+                   <div class="r-line"><span class="c-right">車</span></div>
+                   <div class="r-line"><span class="c-left">月</span><span class="c-right">場</span></div>
+                   <div class="r-line"><span class="c-mid">${currentMonth}~${currentMonth+1}</span></div>
+                   <div class="r-line"><span class="c-mid">月</span></div>
+                   <div class="r-line"><span class="c-left">日</span><span class="c-right">份</span></div>
                 </div>`;
             });
-            
             receiptsHtml += `</div>`;
         }
         
