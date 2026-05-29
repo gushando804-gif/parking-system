@@ -69,99 +69,104 @@
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
     /* =========================================
-       🖨️ 終極完美列印：直印 A4 + 第一頁橫向圖 + 十字裁切收據
+       🖨️ 終極完美列印：直印 A4 + 第一頁幾何旋轉 + 收據十字裁切絕對定位
        ========================================= */
     @media print {
-      /* 強制設定全文件為 A4 直向 (Portrait) */
-      @page { size: A4 portrait; margin: 0; } 
+      /* 強制設定全文件為 A4 直向 (Portrait)，邊界 10mm */
+      @page { size: A4 portrait; margin: 10mm; } 
       
       body * { visibility: hidden; }
       #print-area, #print-area * { visibility: visible; }
       #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; color: #000; font-family: "Microsoft JhengHei", "PMingLiU", sans-serif; }
       
-      /* --- 1. 總表黑魔法：旋轉變橫向 --- */
+      /* --- 1. 總表黑魔法：精準的空間旋轉 --- */
       .page-landscape-wrapper {
-        width: 210mm; 
-        height: 297mm; 
+        width: 190mm;  /* A4 寬度扣除邊界 */
+        height: 277mm; /* A4 高度扣除邊界 */
         position: relative;
         overflow: hidden;
         page-break-after: always;
       }
       .map-rotated-content {
-        width: 277mm; /* 展開成橫向寬度 (扣除邊界) */
-        height: 190mm; /* 展開成橫向高度 (扣除邊界) */
+        width: 277mm;  /* 展開成橫向的寬度 */
+        height: 190mm; /* 展開成橫向的高度 */
         position: absolute;
-        top: 10mm;
-        left: 10mm;
-        transform: rotate(90deg) translateY(-100%);
+        top: 0;
+        left: 190mm; /* 把原點推到右上角 */
         transform-origin: top left;
+        transform: rotate(90deg); /* 順時針轉 90 度，完美填滿直向版面 */
         background: #fff;
+        padding: 5mm 10mm; 
         box-sizing: border-box;
       }
       
-      .map-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; }
+      .map-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; padding-top: 5mm;}
       .map-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 4px; width: 100%; }
       
-      /* 🌟 100% 復刻 5 格標準車位框 🌟 */
+      /* 🌟 100% 復刻 5 格標準車位框，絕對不出現未繳費文字 🌟 */
       .map-box { 
         display: flex; flex-direction: column; 
-        border: 1px solid #333; height: 100px; 
+        border: 1px solid #333; height: 80px; 
         box-sizing: border-box; background: #fff; 
       }
       .map-box > div { 
         flex: 1; display: flex; align-items: center; justify-content: center; 
-        border-bottom: 1px solid #333; font-size: 12px; white-space: nowrap; overflow: hidden;
+        border-bottom: 1px solid #333; font-size: 11px; white-space: nowrap; overflow: hidden;
+        color: #000; font-weight: normal;
       }
       .map-box > div:last-child { border-bottom: none; }
-      .box-id { background: #e9ecef !important; font-weight: bold; font-size: 14px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .box-name { font-weight: bold; }
+      .box-id { background: #e9ecef !important; font-weight: bold; font-size: 13px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .box-name { font-weight: bold !important; font-size: 12px !important; }
       
       .box-spacer { grid-column: span 12; }
       .empty-box { background: #f9f9f9; border: 1px dashed #aaa; }
       .empty-box > div { border: none !important; }
 
       /* --- 2. 十字裁切收據 (2x2 置中網格) --- */
-      .receipt-page-wrapper {
-        width: 210mm; 
-        height: 297mm; 
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        page-break-after: always;
-      }
       .receipt-page { 
-        width: 190mm; /* 留出外圈邊距 */
-        height: 270mm; 
+        width: 190mm; 
+        height: 277mm; 
         display: grid; 
         grid-template-columns: 1fr 1fr; 
         grid-template-rows: 1fr 1fr; 
-        border: 1px solid transparent; /* 隱藏外框 */
+        page-break-after: always;
+        box-sizing: border-box;
       }
       .receipt-card { 
-        padding: 15px; 
         box-sizing: border-box; 
+        padding: 12mm; /* 收據內部留白 */
       }
       /* 🌟 畫出十字裁切線 🌟 */
-      .receipt-card:nth-child(odd) { border-right: 1px solid #666; }
-      .receipt-card:nth-child(1), .receipt-card:nth-child(2) { border-bottom: 1px solid #666; }
+      .receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
+      .receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
+      .receipt-card:nth-child(3) { border-right: 1px dashed #999; }
+      .receipt-card:nth-child(4) { }
       
-      /* 🌟 100% 復刻 Excel 排版的文字表格 🌟 */
-      .receipt-table { width: 100%; height: 100%; border-collapse: collapse; }
-      .receipt-table td { padding: 0; vertical-align: middle; font-size: 14px; color: #000; }
-      .c-left { text-align: left; padding-left: 15px !important; }
-      .c-center { text-align: center; }
-      .c-name { text-align: center; font-weight: bold; font-size: 16px; }
-      .c-right { text-align: right; padding-right: 15px !important; }
+      /* 🌟 絕對定位黑魔法：文字 100% 釘死在你給的截圖位置 🌟 */
+      .receipt-inner {
+        width: 100%; height: 100%;
+        position: relative; /* 建立絕對定位的參考座標 */
+        writing-mode: vertical-rl;
+        text-orientation: upright;
+        font-family: "DFKai-sb", "標楷體", serif;
+      }
+      .r-name-col { position: absolute; right: 0%; top: 5%; font-size: 22px; font-weight: bold; letter-spacing: 2px; }
+      .r-item-col { position: absolute; right: 28%; top: 15%; font-size: 18px; letter-spacing: 1px; }
+      .r-amt-col  { position: absolute; right: 50%; top: 15%; font-size: 18px; letter-spacing: 1px; }
+      .r-stamp-col{ position: absolute; left: 18%; bottom: 15%; font-size: 20px; font-weight: bold; letter-spacing: 4px; }
+      .r-date-col { position: absolute; left: 0%; bottom: 10%; font-size: 14px; font-family: "Microsoft JhengHei", sans-serif; letter-spacing: 1px; }
     }
   </style>
 </head>
 <body>
 
+  <!-- 系統驗證畫面 -->
   <div id="auth-screen">
     <h1 id="auth-title">系統驗證中...</h1>
     <p id="auth-desc">請稍候，正在讀取您的 LINE 身分資料</p>
   </div>
 
+  <!-- 主系統操作畫面 -->
   <div id="main-app">
     <div class="header-nav">
       <button class="nav-btn" onclick="changePeriod(-1)">&#10094;</button>
@@ -173,6 +178,7 @@
     <div id="status-msg">資料載入中，請稍候...</div>
     <div id="parking-grid" class="grid-container"></div>
 
+    <!-- 編輯彈出視窗 -->
     <div id="editModal" class="modal">
       <div class="modal-content">
         <h3 id="modal-title">車位編輯</h3>
@@ -212,6 +218,7 @@
       </div>
     </div>
 
+    <!-- 匯入提示視窗 -->
     <div id="copyModal" class="modal">
       <div class="modal-content" style="max-width: 350px;">
         <h3 style="color: #007bff; font-size: 28px;">💡 系統提示</h3>
@@ -227,11 +234,12 @@
     </div>
   </div>
 
+  <!-- 🌟 物理隔離列印區塊 🌟 -->
   <div id="print-area" style="display: none;"></div>
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // GAS 網址已經幫你填好
+    // GAS 網址已完美填入
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
     let currentYear = 115;
@@ -364,7 +372,7 @@
         return res;
     }
 
-    // 🌟 終極列印功能 🌟
+    // 🌟 終極列印功能：直印旋轉黑魔法 + 絕對定位完美復刻 🌟
     function printReport() {
         if (!globalSpaces || globalSpaces.length === 0) {
             alert("⚠️ 資料尚未載入完成，請稍等幾秒鐘後再按列印！");
@@ -375,23 +383,24 @@
         let mainApp = document.getElementById('main-app');
         let periodStr = `民國 ${currentYear} 年 ${currentMonth}~${currentMonth+1} 月份`;
         
-        // --- 1. 第一頁：利用旋轉黑魔法印出 5格 U型總表 ---
+        // --- 1. 第一頁：嚴格 5 格 U型總表 ---
         const topIds = ['15','13','12','11','10','9','8','7','6','5','3','2','1'];
         const botIds = ['16','17','18','19','20','21','22','23','25','26','','',''];
 
         function getBox(id) {
            if(!id) return '';
            let s = globalSpaces.find(x => x.SpaceID == id);
+           // 如果空位，給 5 個合格的空框
            if(!s || !s.Name) {
                return `<div class="map-box empty-box"><div class="box-id">${id}</div><div></div><div></div><div></div><div></div></div>`;
            }
-           // 🌟 完全拔除未繳費的文字，嚴格遵守 5 格設計 🌟
+           // 🌟 嚴格 5 格，第五格永遠留白，不印「未繳費」 🌟
            return `<div class="map-box">
              <div class="box-id">${s.SpaceID}</div>
              <div class="box-name">${s.Name}</div>
              <div class="box-plate">${s.LicensePlate || ''}</div>
              <div class="box-phone">${s.Phone || ''}</div>
-             <div>&nbsp;</div>
+             <div>&nbsp;</div> 
            </div>`;
         }
 
@@ -406,60 +415,39 @@
         
         mapHtml += `</div></div></div>`;
         
-        // --- 2. 第二頁起：置中十字裁切，表格絕對定位還原文字版面 ---
+        // --- 2. 第二頁起：十字裁切 2x2 置中收據 ---
         let receiptsHtml = '';
         let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
         
         for (let i = 0; i < validSpaces.length; i += 4) {
             let group = validSpaces.slice(i, i + 4);
-            receiptsHtml += `<div class="receipt-page-wrapper"><div class="receipt-page">`;
+            receiptsHtml += `<div class="receipt-page">`;
             
-            group.forEach(space => {
-                let name = space.Name || '';
-                let amt = space.Amount || '';
-                let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
-                
-                // 🌟 使用 Table 完美復刻 Excel 裡的空格排版 🌟
-                receiptsHtml += `
-                <div class="receipt-card">
-                  <table class="receipt-table">
-                    <colgroup><col width="32%"><col width="30%"><col width="18%"><col width="20%"></colgroup>
-                    <tr>
-                      <td></td><td></td>
-                      <td class="c-name" style="font-size: 18px;">${name}</td>
-                      <td class="c-right" style="font-size: 14px;">茲收到</td>
-                    </tr>
-                    <tr><td class="c-left">中華民國</td><td></td><td></td><td></td></tr>
-                    <tr>
-                      <td></td>
-                      <td class="c-center" style="font-size: 18px; font-weight: bold;">${space.SpaceID}</td>
-                      <td></td><td></td>
-                    </tr>
-                    <tr>
-                      <td class="c-left" style="font-size: 14px;">珠靈殿管理委員會</td>
-                      <td></td><td></td>
-                      <td class="c-right" style="font-size: 14px;">此據</td>
-                    </tr>
-                    <tr>
-                      <td></td><td class="c-center">號車位之清潔費</td><td class="c-name">君</td><td></td>
-                    </tr>
-                    <tr>
-                      <td class="c-left">新台幣 <span style="font-size: 16px; font-weight: bold;">${displayAmt}</span> 元整</td>
-                      <td></td><td class="c-name">承</td><td></td>
-                    </tr>
-                    <tr><td></td><td></td><td class="c-name">租</td><td></td></tr>
-                    <tr><td class="c-left">115</td><td></td><td class="c-name">本</td><td></td></tr>
-                    <tr><td class="c-left">年</td><td></td><td class="c-name">殿</td><td></td></tr>
-                    <tr><td></td><td></td><td class="c-name">停</td><td></td></tr>
-                    <tr><td></td><td></td><td class="c-name">車</td><td></td></tr>
-                    <tr><td class="c-left">月</td><td></td><td class="c-name">場</td><td></td></tr>
-                    <tr><td></td><td class="c-center">${currentMonth}~${currentMonth+1}</td><td></td><td></td></tr>
-                    <tr><td></td><td class="c-center">月</td><td></td><td></td></tr>
-                    <tr><td class="c-left">日</td><td></td><td class="c-name">份</td><td></td></tr>
-                  </table>
-                </div>`;
-            });
-            receiptsHtml += `</div></div>`;
+            // 強制印滿 4 格，不足 4 張用空白格補齊以維持十字線
+            for (let j = 0; j < 4; j++) {
+                if (j < group.length) {
+                    let space = group[j];
+                    let name = space.Name || '';
+                    let amt = space.Amount || '';
+                    let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
+                    
+                    // 🌟 絕對定位黑魔法：釘死排版位置 🌟
+                    receiptsHtml += `
+                    <div class="receipt-card">
+                      <div class="receipt-inner">
+                        <div class="r-name-col">茲收到 <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 24px;">${name}</span> 君</div>
+                        <div class="r-item-col">承租本殿停車場 <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 22px; font-weight: bold;">${space.SpaceID}</span> 號車位之清潔費</div>
+                        <div class="r-amt-col">新台幣 <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 20px; font-weight: bold;">${displayAmt}</span> 元整</div>
+                        <div class="r-stamp-col">珠靈殿管理委員會　此據</div>
+                        <div class="r-date-col">中華民國 <span style="font-weight: bold;">115</span> 年 <span style="font-weight: bold;">${currentMonth}~${currentMonth+1}</span> 月份</div>
+                      </div>
+                    </div>`;
+                } else {
+                    // 補齊空的虛線格
+                    receiptsHtml += `<div class="receipt-card"></div>`;
+                }
+            }
+            receiptsHtml += `</div>`;
         }
         
         // 合併列印
