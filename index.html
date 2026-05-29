@@ -69,49 +69,57 @@
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
     /* =========================================
-       🖨️ 列印專屬防呆排版：完美復刻 Excel 
+       🖨️ 終極列印排版：A4 橫式 + 4張完美切割 
        ========================================= */
     @media print {
-      @page { size: A4 portrait; margin: 1cm; } 
+      /* 🌟 強制設定為 A4 橫式 (Landscape) 🌟 */
+      @page { size: A4 landscape; margin: 10mm; } 
+      
+      #print-area { font-family: "Microsoft JhengHei", sans-serif; color: #000; background: #fff; width: 100%; height: 100%; }
+      .page-break { page-break-before: always; clear: both; padding-top: 10px; }
+      
+      /* --- 1. 總表位置圖 --- */
+      .map-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; }
+      .map-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 6px; width: 100%; }
+      /* 高度縮小一點點，讓它完美塞進橫式的 A4 高度內 */
+      .map-box { border: 1px solid #333; height: 80px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; background: #fff; overflow: hidden; }
+      .box-spacer { grid-column: span 12; }
+      .empty-box { background: #f9f9f9; border: 1px dashed #aaa; }
+      .box-id { width: 100%; background: #e9ecef; border-bottom: 1px solid #333; text-align: center; font-weight: bold; font-size: 14px; padding: 2px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .box-name { font-size: 14px; font-weight: bold; margin-top: 3px; white-space: nowrap; }
+      .box-plate { font-size: 11px; margin-top: 2px; color: #222; }
+      .box-phone { font-size: 11px; margin-top: 1px; color: #222; }
+      .box-unpaid { font-size: 12px; font-weight: bold; color: #000; border-top: 1px solid #000; width: 100%; text-align: center; margin-top: auto; background: #ddd; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
+      
+      /* --- 2. 一頁 4 張的直書收據 --- */
+      .receipt-grid { display: block; width: 100%; }
+      .receipt-card { 
+        float: left; 
+        width: 23%; /* 23% * 4張 = 92%，剩下的 8% 拿來當間距 */
+        margin-right: 2.66%; 
+        margin-bottom: 20px; 
+        border: 1.5px dashed #666; 
+        padding: 10px; 
+        box-sizing: border-box; 
+        /* 固定高度，剛好塞滿橫向 A4 的高度 */
+        height: 180mm; 
+        page-break-inside: avoid; 
+        break-inside: avoid; 
+        writing-mode: vertical-rl; 
+        text-orientation: upright; 
+        font-family: "DFKai-sb", "標楷體", serif; 
+      }
+      /* 每滿 4 張，就把右邊距歸零，並且強制換到下一頁！ */
+      .receipt-card:nth-child(4n) { 
+        margin-right: 0; 
+        page-break-after: always; 
+      } 
+      .receipt-grid::after { content: ""; display: table; clear: both; } 
+      
+      /* 收據內的直書排版微調 */
+      .r-line { margin-left: 14px; }
+      .r-text-bold { font-family: "Microsoft JhengHei", sans-serif; font-size: 18px; font-weight: bold; }
     }
-    #print-area { font-family: "Microsoft JhengHei", sans-serif; color: #000; background: #fff; width: 100%; }
-    .page-break { page-break-before: always; clear: both; padding-top: 10px; }
-    
-    /* 🌟 1. 總表位置圖 (CSS Grid) 🌟 */
-    .map-title { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 15px; }
-    .map-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 6px; width: 100%; }
-    .map-box { border: 1px solid #333; height: 95px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; background: #fff; overflow: hidden; }
-    .box-spacer { grid-column: span 12; }
-    .empty-box { background: #f9f9f9; border: 1px dashed #aaa; }
-    .box-id { width: 100%; background: #e9ecef; border-bottom: 1px solid #333; text-align: center; font-weight: bold; font-size: 14px; padding: 2px 0; }
-    .box-name { font-size: 14px; font-weight: bold; margin-top: 4px; white-space: nowrap; }
-    .box-plate { font-size: 11px; margin-top: 3px; color: #222; }
-    .box-phone { font-size: 11px; margin-top: 2px; color: #222; }
-    .box-unpaid { font-size: 12px; font-weight: bold; color: #000; border-top: 1px solid #000; width: 100%; text-align: center; margin-top: auto; background: #ddd; }
-    
-    /* 🌟 2. 傳統直書收據 🌟 */
-    .receipt-grid { display: block; width: 100%; }
-    .receipt-card { 
-      float: left; 
-      width: 31%; 
-      margin-right: 3.5%; 
-      margin-bottom: 25px; 
-      border: 2px dashed #000; 
-      padding: 15px 5px; 
-      box-sizing: border-box; 
-      page-break-inside: avoid; 
-      break-inside: avoid; 
-      height: 380px; 
-      /* 開啟直書模式 */
-      writing-mode: vertical-rl; 
-      text-orientation: upright; 
-      font-family: "DFKai-sb", "標楷體", serif; 
-    }
-    .receipt-card:nth-child(3n) { margin-right: 0; } 
-    .receipt-grid::after { content: ""; display: table; clear: both; } 
-    
-    .r-col { font-size: 18px; letter-spacing: 2px; }
-    .r-name { font-size: 22px; font-weight: bold; font-family: "Microsoft JhengHei", sans-serif; }
   </style>
 </head>
 <body>
@@ -306,7 +314,7 @@
       document.getElementById('status-msg').style.display = 'none';
     }
 
-    // 🌟 中文大寫數字轉換器 🌟
+    // 中文大寫數字轉換器
     function toChineseAmt(numStr) {
         if (!numStr) return '________';
         let str = numStr.toString().trim();
@@ -324,7 +332,7 @@
         return res;
     }
 
-    // 🌟 終極排版列印功能 🌟
+    // 🌟 終極排版：列印生成 🌟
     function printReport() {
         if (!globalSpaces || globalSpaces.length === 0) {
             alert("⚠️ 資料尚未載入完成，請稍等幾秒鐘後再按列印！");
@@ -335,7 +343,7 @@
         let mainApp = document.getElementById('main-app');
         let periodStr = `民國 ${currentYear} 年 ${currentMonth}~${currentMonth+1} 月份`;
         
-        // 依照 Excel 排版定義車位號碼順序
+        // --- 第一頁：總表 ---
         const topLayout = ['15', '13', '12', '11', '10', '9', '8', '7', '6', '5', '3', '2', '1'];
         const bottomLayout = ['16', '17', '18', '19', '20', '21', '22', '23', '25', '26'];
         
@@ -353,7 +361,6 @@
            </div>`;
         }
 
-        // 1. 產生實體位置圖總表 (利用 Grid 完美對齊)
         let mapHtml = `
         <div class="map-title">珠靈殿停車場 位置與繳費總表 (${periodStr})</div>
         <div class="map-grid">
@@ -363,7 +370,6 @@
             ${bottomLayout.map(id => getBox(id)).join('')}
         </div>`;
 
-        // 檢查是否有不在圖上的額外車位
         let mappedIds = [...topLayout, ...bottomLayout, '39-1', '39-2'];
         let otherSpaces = globalSpaces.filter(s => !mappedIds.includes(s.SpaceID) && s.Name);
         if(otherSpaces.length > 0) {
@@ -372,38 +378,36 @@
             mapHtml += `</div>`;
         }
         
-        // 2. 產生直書傳統收據
+        // --- 第二頁起：收據 ---
         let receiptsHtml = `<div class="receipt-grid">`;
         globalSpaces.forEach(space => {
             let name = space.Name || '';
             let amt = space.Amount || '';
             
             if (name !== '') {
-                // 自動套用大寫轉換
-                let amtText = amt ? `新台幣 <span class="r-name">${toChineseAmt(amt)}</span> 元整` : `新台幣 <span class="r-name">________</span> 元整`;
+                let amtText = amt ? `新台幣 <span class="r-text-bold">${toChineseAmt(amt)}</span> 元整` : `新台幣 <span class="r-text-bold">________</span> 元整`;
                 
                 receiptsHtml += `
                 <div class="receipt-card">
-                    <div class="r-col" style="padding-right: 5px; margin-top: 15px;">茲收到 <span class="r-name">${name}</span> 君</div>
-                    <div class="r-col" style="padding-right: 15px; margin-top: 15px;">承租本殿停車場 <span class="r-name" style="font-size:20px;">${space.SpaceID}</span> 號車位之清潔費</div>
-                    <div class="r-col" style="padding-right: 15px; margin-top: 15px;">${amtText}</div>
-                    <div class="r-col" style="padding-right: 25px; margin-top: 60px;">珠靈殿管理委員會　此據</div>
-                    <div class="r-col" style="padding-right: 15px; margin-top: 120px; font-size: 16px; font-family: 'Microsoft JhengHei', sans-serif;">中華民國 <span style="font-weight:bold;">115</span> 年 <span style="font-weight:bold;">${currentMonth}~${currentMonth+1}</span> 月份</div>
+                    <div class="r-line" style="font-size: 20px; font-weight: bold; border-left: 1px solid #000; padding-bottom: 20px;">珠靈殿管理委員會　收據</div>
+                    <div class="r-line" style="font-size: 14px; margin-left: 20px; color: #333;">中華民國 <span style="font-family: sans-serif;">115</span> 年 <span style="font-family: sans-serif;">${currentMonth}~${currentMonth+1}</span> 月份</div>
+                    <div class="r-line" style="font-size: 16px; margin-left: 25px; margin-top: 30px;">茲收到 <span class="r-text-bold" style="font-size: 22px;">${name}</span> 君</div>
+                    <div class="r-line" style="font-size: 16px; margin-left: 15px; margin-top: 30px;">承租本殿停車場 <span class="r-text-bold" style="font-size: 22px;">${space.SpaceID}</span> 號車位之清潔費</div>
+                    <div class="r-line" style="font-size: 16px; margin-left: 15px; margin-top: 30px;">${amtText}</div>
+                    <div class="r-line" style="font-size: 18px; margin-left: 35px; margin-top: 120px;">此據</div>
                 </div>`;
             }
         });
         receiptsHtml += `</div>`;
         
-        // 合併列印畫面
+        // 合併列印
         printDiv.innerHTML = mapHtml + `<div class="page-break"></div>` + receiptsHtml;
         
-        // 隱藏主系統，顯示報表
         mainApp.style.display = 'none';
         printDiv.style.display = 'block';
         
         setTimeout(() => { 
             window.print(); 
-            // 印完自動還原畫面
             printDiv.style.display = 'none';
             mainApp.style.display = 'block';
         }, 500);
