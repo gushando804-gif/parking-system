@@ -68,39 +68,36 @@
     .btn-leave { background-color: #dc3545; color: white; display: none; }
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
-    /* 🌟 列印專屬防呆排版 🌟 */
+    /* 🌟 列印專屬防呆排版 (完全獨立) 🌟 */
     @media print {
       @page { size: A4 portrait; margin: 1.5cm; } 
-      body * { visibility: hidden; }
-      #print-area, #print-area * { visibility: visible; }
-      #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; color: #000; font-family: "Microsoft JhengHei", sans-serif; }
-      
-      .print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-      .print-table th, .print-table td { border: 1px solid #000; padding: 6px; text-align: center; }
-      .print-table th { background-color: #e9ecef !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      
-      .page-break { page-break-before: always; clear: both; padding-top: 10px; }
-      
-      .receipt-grid { display: block; width: 100%; }
-      .receipt-card { 
-        float: left; 
-        width: 31%; 
-        margin-right: 3.5%; 
-        margin-bottom: 25px; 
-        border: 2px dashed #333; 
-        padding: 12px; 
-        border-radius: 8px; 
-        box-sizing: border-box; 
-        page-break-inside: avoid; 
-        break-inside: avoid; 
-      }
-      .receipt-card:nth-child(3n) { margin-right: 0; } 
-      .receipt-grid::after { content: ""; display: table; clear: both; } 
-
-      .r-title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 6px;}
-      .r-date { text-align: center; font-size: 12px; margin-bottom: 12px; color: #333; }
-      .r-body { font-size: 14px; line-height: 1.8; text-align: left; }
     }
+    #print-area { font-family: "Microsoft JhengHei", sans-serif; color: #000; background: #fff; width: 100%; }
+    .print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: center; }
+    .print-table th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    
+    .page-break { page-break-before: always; clear: both; padding-top: 10px; }
+    
+    .receipt-grid { display: block; width: 100%; }
+    .receipt-card { 
+      float: left; 
+      width: 31%; 
+      margin-right: 3.5%; 
+      margin-bottom: 25px; 
+      border: 2px dashed #333; 
+      padding: 12px; 
+      border-radius: 8px; 
+      box-sizing: border-box; 
+      page-break-inside: avoid; 
+      break-inside: avoid; 
+    }
+    .receipt-card:nth-child(3n) { margin-right: 0; } 
+    .receipt-grid::after { content: ""; display: table; clear: both; } 
+
+    .r-title { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 8px;}
+    .r-date { text-align: center; font-size: 14px; margin-bottom: 12px; color: #333; }
+    .r-body { font-size: 16px; line-height: 1.8; text-align: left; }
   </style>
 </head>
 <body>
@@ -115,14 +112,11 @@
       <button class="nav-btn" onclick="changePeriod(-1)">&#10094;</button>
       <h2 id="period-title">民國 115年 5-6月</h2>
       <button class="nav-btn" onclick="changePeriod(1)">&#10095;</button>
-      
       <button class="nav-btn" onclick="printReport()" style="background-color: #17a2b8; width: auto; padding: 0 15px; border-radius: 12px; font-size: 18px; margin-left: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">🖨️ 列印</button>
     </div>
 
     <div id="status-msg">資料載入中，請稍候...</div>
     <div id="parking-grid" class="grid-container"></div>
-
-    <div id="print-area" style="display: none;"></div>
 
     <div id="editModal" class="modal">
       <div class="modal-content">
@@ -176,12 +170,13 @@
         </div>
       </div>
     </div>
-
   </div>
+
+  <div id="print-area" style="display: none;"></div>
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // 直接幫你填好最新的 GAS 網址！
+    // GAS 網址已自動帶入你的最新版本
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
     let currentYear = 115;
@@ -316,8 +311,16 @@
       document.getElementById('status-msg').style.display = 'none';
     }
 
+    // 🌟 終極防呆列印功能 🌟
     function printReport() {
+        // 防止資料還沒讀完就按列印
+        if (!globalSpaces || globalSpaces.length === 0) {
+            alert("⚠️ 資料尚未載入完成，請稍等幾秒鐘後再按列印！");
+            return;
+        }
+
         let printDiv = document.getElementById('print-area');
+        let mainApp = document.getElementById('main-app');
         let periodStr = `民國 ${currentYear} 年 ${currentMonth}~${currentMonth+1} 月份`;
         
         let tableHtml = `<h2 style="text-align:center;">珠靈殿停車場 承租與繳費總表 (${periodStr})</h2>`;
@@ -336,7 +339,7 @@
             
             if (name !== '') {
                 let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? amt : '________');
-                let amtText = (amt === '3600') ? `新台幣 <b>參仟陸佰</b> 元整` : `新台幣 <b style="font-size:16px;">${displayAmt}</b> 元整`;
+                let amtText = (amt === '3600') ? `新台幣 <b>參仟陸佰</b> 元整` : `新台幣 <b style="font-size:18px;">${displayAmt}</b> 元整`;
                 
                 receiptsHtml += `
                 <div class="receipt-card">
@@ -346,7 +349,7 @@
                         茲收到 <b>${name}</b> 君<br><br>
                         承租本殿停車場 <b>${space.SpaceID}</b> 號車位之清潔費<br><br>
                         ${amtText}<br>
-                        <div style="text-align: right; margin-top: 15px;">此據</div>
+                        <div style="text-align: right; margin-top: 25px;">此據</div>
                     </div>
                 </div>`;
             }
@@ -357,7 +360,18 @@
         
         printDiv.innerHTML = tableHtml + `<div class="page-break"></div>` + receiptsHtml;
         
-        setTimeout(() => { window.print(); }, 300);
+        // 🌟 物理隔離：把系統主畫面徹底隱藏，強制只顯示報表區塊給瀏覽器看 🌟
+        mainApp.style.display = 'none';
+        printDiv.style.display = 'block';
+        
+        // 給瀏覽器 0.5 秒的時間把報表畫出來再觸發列印
+        setTimeout(() => { 
+            window.print(); 
+            
+            // 當列印視窗關閉後，立刻把系統畫面變回來
+            printDiv.style.display = 'none';
+            mainApp.style.display = 'block';
+        }, 500);
     }
 
     function openModal(space) {
