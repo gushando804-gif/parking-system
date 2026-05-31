@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>珠靈殿停車管理系統</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
   <style>
     body { font-family: sans-serif; padding: 10px; background-color: #f4f4f9; margin: 0; }
     
@@ -74,73 +76,58 @@
     .btn-leave { background-color: #dc3545; color: white; display: none; }
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
-    /* 🌟 手機端預設隱藏列印區塊 🌟 */
-    #print-area { display: none; }
-
     /* =========================================
-       🖨️ 列印專屬 CSS：防閃退結界模式
+       🌟 新增：純背景 PDF 生成專用結界 🌟
+       這些樣式不會受到手機螢幕大小影響，永遠保持 A4 比例
        ========================================= */
-    @media print {
-      body { background-color: #fff; margin: 0; padding: 0; }
-      
-      #main-app, #auth-screen, .modal { display: none !important; }
-      #print-area { 
-        display: block !important; 
-        position: absolute; left: 0; top: 0; width: 100%; 
-        color: #000; 
-        font-family: Arial, "DFKai-sb", "標楷體", serif; 
-      }
-      
-      @page { margin: 5mm; }
-      /* 🌟 橫印總表：下方邊界設定為 0mm 🌟 */
-      @page landscape_page { size: A4 landscape; margin: 5mm 5mm 0mm 5mm; }
-      @page portrait_page { size: A4 portrait; margin: 5mm; }
-
-      /* --- 1. 總表樣式 (絕對座標防跑版畫布) --- */
-      .page-map {
-        page: landscape_page;
-        position: relative;
-        width: 100%; 
-        /* 🌟 下方邊界歸零後，高度可以拉長到 200mm，讓下方更有空間 🌟 */
-        height: 200mm; 
-        max-height: 200mm; 
-        overflow: hidden; 
-        box-sizing: border-box;
-      }
-      
-      .excel-map { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
-      .excel-map td { 
-        border: 1.5px solid #000; 
-        height: 27px; 
-        overflow: hidden; 
-        white-space: nowrap; 
-        word-break: break-all;
-      }
-      .m-id { font-weight: bold; font-size: 16px; background-color: #fff !important; -webkit-print-color-adjust: exact; }
-      .m-name { font-weight: bold; font-size: 16px; }
-      .m-text { font-size: 13px; font-weight: bold; }
-      
-      .right-map td { border: 1.5px solid #000; }
-      
-      /* --- 2. 收據樣式 (強制鎖死 A4 直向) --- */
-      .page-receipts {
-        page: portrait_page;
-        page-break-after: always;
-        width: 200mm; 
-        height: 287mm; 
-        display: grid; 
-        grid-template-columns: 1fr 1fr; 
-        grid-template-rows: 1fr 1fr; 
-        box-sizing: border-box;
-      }
-      .receipt-card { position: relative; box-sizing: border-box; padding: 20mm; }
-      .receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
-      .receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
-      .receipt-card:nth-child(3) { border-right: 1px dashed #999; }
-      .receipt-card:nth-child(4) { }
-      .receipt-inner { width: 100%; height: 100%; display: flex; flex-direction: row; justify-content: space-between; writing-mode: vertical-rl; text-orientation: upright; font-family: Arial, "DFKai-sb", "標楷體", serif; }
-      .r-line { display: flex; flex-direction: row; justify-content: space-between; align-items: center; font-size: 18px; height: 100%; }
+    #pdf-export-area {
+      position: absolute; 
+      left: -9999px; /* 隱藏在螢幕之外 */
+      top: 0;
+      background: #fff; color: #000;
+      /* 確保蘋果 iOS、Mac 與 Windows 都能正常顯示標楷體 */
+      font-family: Arial, "DFKai-sb", "BiauKai", "STKaiti", "標楷體", serif; 
     }
+
+    /* --- PDF 總表專用 --- */
+    .pdf-page-map {
+      position: relative;
+      width: 287mm; /* A4 橫印寬度 */
+      height: 195mm; /* A4 橫印高度 */
+      box-sizing: border-box;
+      background-color: #fff;
+    }
+    .pdf-excel-map { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
+    .pdf-excel-map td { 
+      border: 1.5px solid #000; 
+      height: 27px; 
+      overflow: hidden; 
+      white-space: nowrap; 
+      word-break: break-all;
+    }
+    .pdf-m-id { font-weight: bold; font-size: 16px; background-color: #fff !important; }
+    .pdf-m-name { font-weight: bold; font-size: 16px; }
+    .pdf-m-text { font-size: 13px; font-weight: bold; }
+    .pdf-right-map td { border: 1.5px solid #000; }
+
+    /* --- PDF 收據專用 --- */
+    .pdf-page-receipts {
+      width: 200mm; /* A4 直印寬度 */
+      height: 287mm; /* A4 直印高度 */
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      grid-template-rows: 1fr 1fr; 
+      box-sizing: border-box;
+      page-break-after: always;
+      background-color: #fff;
+    }
+    .pdf-receipt-card { position: relative; box-sizing: border-box; padding: 20mm; }
+    .pdf-receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
+    .pdf-receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
+    .pdf-receipt-card:nth-child(3) { border-right: 1px dashed #999; }
+    .pdf-receipt-inner { width: 100%; height: 100%; display: flex; flex-direction: row; justify-content: space-between; writing-mode: vertical-rl; text-orientation: upright; }
+    .pdf-r-line { display: flex; flex-direction: row; justify-content: space-between; align-items: center; font-size: 18px; height: 100%; }
+
   </style>
 </head>
 <body>
@@ -156,8 +143,8 @@
       <h2 id="period-title">民國 115年 5-6月</h2>
       <button class="nav-btn" onclick="changePeriod(1)">&#10095;</button>
       
-      <button class="print-btn btn-map" onclick="printMap()">🗺️ 印總表(橫式)</button>
-      <button class="print-btn btn-receipt" onclick="printReceipts()">🧾 印收據(直式)</button>
+      <button class="print-btn btn-map" onclick="downloadMapPDF()">📥 下載總表 (PDF)</button>
+      <button class="print-btn btn-receipt" onclick="downloadReceiptsPDF()">📥 下載收據 (PDF)</button>
     </div>
 
     <div id="status-msg">資料載入中，請稍候...</div>
@@ -217,7 +204,7 @@
     </div>
   </div>
 
-  <div id="print-area" style="display: none;"></div>
+  <div id="pdf-export-area"></div>
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
@@ -231,6 +218,11 @@
     let globalUserId = ""; 
 
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
+
+    // 🌟 LINE 瀏覽器防呆偵測 🌟
+    function isLineBrowser() {
+      return /Line/i.test(navigator.userAgent);
+    }
 
     async function initAuth() {
       try {
@@ -330,24 +322,22 @@
         return res.replace(/零$/, '');
     }
 
-    function setPrintOrientation(orientation) {
-        let oldStyle = document.getElementById('dynamic-print-style');
-        if (oldStyle) oldStyle.remove();
-        let style = document.createElement('style');
-        style.id = 'dynamic-print-style';
-        style.innerHTML = `@media print { @page { size: A4 ${orientation}; margin: 5mm; } }`;
-        document.head.appendChild(style);
-    }
 
     // =========================================
-    // 🖨️ 獨立按鈕 1：總表 (0mm 下方邊界)
+    // 🖨️ 直接匯出 PDF：總表 (完美鎖死格式)
     // =========================================
-    function printMap() {
+    function downloadMapPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         
-        setPrintOrientation('landscape'); 
-        let printDiv = document.getElementById('print-area');
-        
+        // 阻擋 LINE 內建瀏覽器 (因為 LINE 阻擋下載檔案)
+        if (isLineBrowser()) {
+            alert("⚠️ 系統偵測到您正在使用 LINE。\n\n由於 LINE 限制檔案下載，請點擊畫面右上角的「⋮」或「分享」，選擇「以預設瀏覽器開啟」(Safari / Chrome) 後再執行下載 PDF！");
+            return;
+        }
+
+        document.getElementById('status-msg').style.display = 'block';
+        document.getElementById('status-msg').innerText = "📄 PDF 產生中，請稍候...";
+
         function getSpace(id) {
             let s = globalSpaces.find(x => x.SpaceID == id);
             if(!s || !s.Name) return { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;' };
@@ -359,60 +349,55 @@
         const botIdsRow2 = ['37','36','35','33','32','31','30','29','28','27'];
         const rightIds = ['39-2', '39-1', '39', '38'];
 
-        let mapHtml = `<div class="page-map">`;
+        let mapHtml = `<div class="pdf-page-map">`;
         
-        // 🌟 1. 標題 🌟
         mapHtml += `<div style="position:absolute; top:2%; width:100%; text-align:center; font-size:36px; font-weight:bold; letter-spacing:6px; font-family:'標楷體', serif;">
-                      民國 <span style="font-family:sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
+                      民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        // 🌟 2. 上半部 (15~1) 🌟
         mapHtml += `<div style="position:absolute; top:16%; left:0; width:100%;">`;
-        mapHtml += `<table class="excel-map">`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
+        mapHtml += `<table class="pdf-excel-map">`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        // 🌟 3. 左下半部 (16~26, 37~27) 🌟
         mapHtml += `<div style="position:absolute; top:52%; left:0; width:76.92%;">`;
-        mapHtml += `<table class="excel-map">`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
+        mapHtml += `<table class="pdf-excel-map">`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
         
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="pdf-m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="pdf-m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
         mapHtml += `</table></div>`;
 
-        // 🌟 4. 右側特殊區塊 (39系列) 🌟
         mapHtml += `<div style="position:absolute; top:52%; right:15px; width:13%;">`;
-        mapHtml += `<table class="excel-map right-map">`;
+        mapHtml += `<table class="pdf-excel-map pdf-right-map">`;
         rightIds.forEach(id => {
             let s = getSpace(id);
             mapHtml += `<tr>
                 <td style="width:70%; text-align:center; padding:4px;">
-                    <div class="m-name" style="margin-bottom:3px;">${s.name}</div>
-                    <div class="m-text">${s.plate}</div>
-                    <div class="m-text">${s.phone}</div>
+                    <div class="pdf-m-name" style="margin-bottom:3px;">${s.name}</div>
+                    <div class="pdf-m-text">${s.plate}</div>
+                    <div class="pdf-m-text">${s.phone}</div>
                 </td>
-                <td class="m-id" style="width:30%; vertical-align:middle; font-size:18px;">${id}</td>
+                <td class="pdf-m-id" style="width:30%; vertical-align:middle; font-size:18px;">${id}</td>
             </tr>`;
         });
         mapHtml += `</table></div>`;
 
-        // 🌟 5. 圖形歸位 🌟
         mapHtml += `<div style="position:absolute; bottom:5%; left:78%; width:8%; text-align:center;">
             <svg width="60" height="40" viewBox="0 0 80 50">
                 <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
-                <text x="40" y="40" font-size="18" text-anchor="middle" font-weight="bold" font-family="Microsoft JhengHei">入口</text>
+                <text x="40" y="40" font-size="18" text-anchor="middle" font-weight="bold" font-family="標楷體">入口</text>
             </svg>
         </div>`;
 
@@ -426,26 +411,45 @@
         </div>`;
 
         mapHtml += `</div>`; 
-        
-        printDiv.innerHTML = mapHtml;
-        setTimeout(() => { window.print(); }, 100);
+
+        let container = document.getElementById('pdf-export-area');
+        container.innerHTML = mapHtml;
+
+        // html2pdf 設定
+        let opt = {
+          margin:       5, 
+          filename:     `珠靈殿總表_${currentYear}_${currentMonth}-${currentMonth+1}月.pdf`,
+          image:        { type: 'jpeg', quality: 1 },
+          html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(container.firstElementChild).save().then(() => {
+            document.getElementById('status-msg').style.display = 'none';
+            container.innerHTML = '';
+        });
     }
 
     // =========================================
-    // 🖨️ 獨立按鈕 2：收據穩定墊檔版
+    // 🖨️ 直接匯出 PDF：收據
     // =========================================
-    function printReceipts() {
+    function downloadReceiptsPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         
-        setPrintOrientation('portrait'); 
-        let printDiv = document.getElementById('print-area');
-        
+        if (isLineBrowser()) {
+            alert("⚠️ 系統偵測到您正在使用 LINE。\n\n由於 LINE 限制檔案下載，請點擊畫面右上角的「⋮」或「分享」，選擇「以預設瀏覽器開啟」(Safari / Chrome) 後再執行下載 PDF！");
+            return;
+        }
+
+        document.getElementById('status-msg').style.display = 'block';
+        document.getElementById('status-msg').innerText = "📄 PDF 產生中，請稍候...";
+
         let receiptsHtml = '';
         let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
         
         for (let i = 0; i < validSpaces.length; i += 4) {
             let group = validSpaces.slice(i, i + 4);
-            receiptsHtml += `<div class="page-receipts">`;
+            receiptsHtml += `<div class="pdf-page-receipts">`;
             
             for (let j = 0; j < 4; j++) {
                 if (j < group.length) {
@@ -455,45 +459,63 @@
                     let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
                     
                     receiptsHtml += `
-                    <div class="receipt-card">
-                      <div class="receipt-inner">
-                        <div class="r-line" style="font-size: 22px; font-weight: bold; letter-spacing: 2px;">
+                    <div class="pdf-receipt-card">
+                      <div class="pdf-receipt-inner">
+                        <div class="pdf-r-line" style="font-size: 22px; font-weight: bold; letter-spacing: 2px;">
                           <span>茲收到</span>
-                          <span style="font-size: 26px; font-family: 'Microsoft JhengHei', sans-serif;">${name}</span>
+                          <span style="font-size: 26px;">${name}</span>
                           <span>君</span>
                         </div>
-                        <div class="r-line" style="font-size: 18px; letter-spacing: 1px;">
+                        <div class="pdf-r-line" style="font-size: 18px; letter-spacing: 1px;">
                           <span>承租本殿停車場</span>
-                          <span style="font-size: 26px; font-weight: bold; font-family: 'Microsoft JhengHei', sans-serif;">${space.SpaceID}</span>
+                          <span style="font-size: 26px; font-weight: bold; font-family: Arial, sans-serif;">${space.SpaceID}</span>
                           <span>號車位之清潔費</span>
                         </div>
-                        <div class="r-line" style="font-size: 18px; letter-spacing: 1px;">
+                        <div class="pdf-r-line" style="font-size: 18px; letter-spacing: 1px;">
                           <span>新台幣</span>
-                          <span style="font-size: 22px; font-weight: bold; font-family: 'Microsoft JhengHei', sans-serif; letter-spacing: 3px;">${displayAmt}</span>
+                          <span style="font-size: 22px; font-weight: bold; letter-spacing: 3px;">${displayAmt}</span>
                           <span>元整</span>
                         </div>
-                        <div class="r-line" style="font-size: 22px; font-weight: bold; letter-spacing: 3px;">
+                        <div class="pdf-r-line" style="font-size: 22px; font-weight: bold; letter-spacing: 3px;">
                           <span>珠靈殿管理委員會</span>
                           <span>此據</span>
                         </div>
-                        <div class="r-line" style="font-size: 16px; font-family: 'Microsoft JhengHei', sans-serif; letter-spacing: 1px;">
+                        <div class="pdf-r-line" style="font-size: 16px; letter-spacing: 1px;">
                           <span>中華民國</span>
-                          <span style="font-weight: bold; font-size: 18px;">115</span>
+                          <span style="font-weight: bold; font-size: 18px; font-family: Arial, sans-serif;">115</span>
                           <span>年</span>
-                          <span style="font-weight: bold; font-size: 18px;">${currentMonth}~${currentMonth+1}</span>
+                          <span style="font-weight: bold; font-size: 18px; font-family: Arial, sans-serif;">${currentMonth}~${currentMonth+1}</span>
                           <span>月份</span>
                         </div>
                       </div>
                     </div>`;
                 } else {
-                    receiptsHtml += `<div class="receipt-card"></div>`; 
+                    receiptsHtml += `<div class="pdf-receipt-card"></div>`; 
                 }
             }
             receiptsHtml += `</div>`;
         }
-        
-        printDiv.innerHTML = receiptsHtml;
-        setTimeout(() => { window.print(); }, 100);
+
+        let wrapper = document.createElement('div');
+        wrapper.innerHTML = receiptsHtml;
+
+        let container = document.getElementById('pdf-export-area');
+        container.innerHTML = '';
+        container.appendChild(wrapper);
+
+        let opt = {
+          margin:       5,
+          filename:     `珠靈殿收據_${currentYear}_${currentMonth}-${currentMonth+1}月.pdf`,
+          image:        { type: 'jpeg', quality: 1 },
+          html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak:    { mode: ['css', 'legacy'] }
+        };
+
+        html2pdf().set(opt).from(wrapper).save().then(() => {
+            document.getElementById('status-msg').style.display = 'none';
+            container.innerHTML = '';
+        });
     }
 
     function openModal(space) {
