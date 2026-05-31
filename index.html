@@ -329,7 +329,7 @@
     }
 
     // =========================================
-    // 🖨️ 獨立按鈕 1：無敵畫布總表 (絕對座標版)
+    // 🖨️ 獨立按鈕 1：無敵畫布總表 (圖形右下移修正版)
     // =========================================
     function printMap() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
@@ -399,17 +399,17 @@
         });
         mapHtml += `</table></div>`;
 
-        // 🌟 5. 圖形與指標精準歸位 🌟
-        // 入口 (精準投放到 27 號與 38 號中間的透明空隙)
-        mapHtml += `<div style="position:absolute; top:620px; left:77.5%; width:9%; text-align:center;">
+        // 🌟 5. 圖形與指標精準歸位 (下移+右移) 🌟
+        // 入口：下移到 top:660px，右移到 left:80%
+        mapHtml += `<div style="position:absolute; top:660px; left:80%; width:8%; text-align:center;">
             <svg width="60" height="40" viewBox="0 0 80 50">
                 <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
                 <text x="40" y="40" font-size="18" text-anchor="middle" font-weight="bold" font-family="Microsoft JhengHei">入口</text>
             </svg>
         </div>`;
 
-        // 大樹 (精準綁定在右側 38 號表格的正下方)
-        mapHtml += `<div style="position:absolute; top:600px; right:15px; width:13%; text-align:center;">
+        // 大樹：下移到 top:660px，右移到極限 right:5px
+        mapHtml += `<div style="position:absolute; top:660px; right:5px; width:13%; text-align:center;">
             <svg width="60" height="80" viewBox="0 0 100 120">
                 <rect x="42" y="90" width="16" height="30" fill="#5c4033" stroke="black" stroke-width="1.5"/>
                 <polygon points="50,0 10,40 90,40" fill="#228B22" stroke="black" stroke-width="1.5"/>
@@ -418,8 +418,8 @@
             </svg>
         </div>`;
 
-        // 底部文字指標 (置中於左下半部下方)
-        mapHtml += `<div style="position:absolute; top:680px; left:38.46%; transform:translateX(-50%); text-align:center; font-weight:bold;">
+        // 底部文字指標：往下推開到 top:700px
+        mapHtml += `<div style="position:absolute; top:700px; left:38.46%; transform:translateX(-50%); text-align:center; font-weight:bold;">
             <div style="font-size:24px; line-height:1;">↑</div>
             <div style="font-size:16px; margin-top:5px;">建發水工程公司</div>
         </div>`;
