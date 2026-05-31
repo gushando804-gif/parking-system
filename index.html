@@ -75,64 +75,51 @@
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
     /* =========================================
-       🖨️ 列印區塊：100% 絕對指定座標版 (永不跑位)
+       🖨️ 列印區塊：絕對座標無敵版 (永不跑位)
        ========================================= */
     @media print {
       body * { visibility: hidden; }
       #print-area, #print-area * { visibility: visible; }
-      #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; color: #000; font-family: "DFKai-sb", "標楷體", serif; }
+      #print-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; padding: 0; margin: 0; color: #000; }
       
-      /* 紙張邊界設定為 5mm */
+      /* 紙張邊界全面設為 0.5cm (5mm) */
       @page { margin: 5mm; }
       @page landscape_page { size: A4 landscape; margin: 5mm; }
       @page portrait_page { size: A4 portrait; margin: 5mm; }
 
-      /* --- 1. 總表樣式 (強制橫向 A4) --- */
+      /* --- 1. 總表樣式 (絕對座標畫布) --- */
       .page-map {
         page: landscape_page;
         page-break-after: always;
-        width: 100%; height: 100%;
-        /* 🌟 上方精準留白 3cm (30mm) 🌟 */
-        padding-top: 30mm; 
-        box-sizing: border-box;
-      }
-      
-      .map-title { text-align: center; font-size: 26px; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px; font-family: "DFKai-sb", "標楷體", serif; }
-      
-      /* 🌟 核心升級：精準 15x7 死座標網格 🌟 */
-      .map-grid { 
-        display: grid; 
-        grid-template-columns: repeat(15, 1fr); 
-        /* 第2列設定為120px的巨大隱形牆，把車道徹底拉開 */
-        grid-template-rows: 85px 120px 85px 85px 85px 85px 50px; 
-        gap: 4px; 
+        position: relative; /* 開啟畫布模式 */
         width: 100%; 
+        height: 100%; /* A4 高度扣除 1cm 邊界，約 200mm */
+        box-sizing: border-box;
+        font-family: "Microsoft JhengHei", sans-serif;
       }
       
-      /* 嚴格 5 格標準車位框 */
-      .map-box { 
-        display: flex; flex-direction: column; 
-        border: 1px solid #000; 
-        height: 100%; /* 填滿 Grid 的高度 */
-        box-sizing: border-box; background: #fff; 
-        page-break-inside: avoid;
+      /* 🌟 原汁原味的獨立表格設定 🌟 */
+      .excel-map { 
+        width: 100%; 
+        border-collapse: collapse; 
+        text-align: center; 
+        table-layout: fixed; 
       }
-      .map-box > div { 
-        flex: 1; display: flex; align-items: center; justify-content: center; 
-        border-bottom: 1px solid #000; font-size: 13px; color: #000; 
-        white-space: nowrap; overflow: hidden; text-overflow: clip; font-weight: bold;
+      .excel-map td { 
+        border: 1.5px solid #000; 
+        height: 28px; /* 加大高度，讓 5 格更寬裕 */
+        overflow: hidden; 
+        white-space: nowrap; 
+        word-break: break-all;
       }
-      .map-box > div:last-child { border-bottom: none; }
+      .m-id { font-weight: bold; font-size: 16px; background-color: #fff !important; -webkit-print-color-adjust: exact; }
+      .m-name { font-weight: bold; font-size: 16px; }
+      .m-text { font-size: 13px; font-weight: bold; }
       
-      .box-id { background: #e9ecef !important; font-size: 15px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .box-name { font-size: 15px !important; }
-      .box-text { font-size: 11px !important; }
+      /* 右側 39 系列特殊表格 */
+      .right-map td { border: 1.5px solid #000; }
       
-      .empty-box { background: #f9f9f9 !important; border: 1px dashed #aaa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .empty-box > div { border-bottom: 1px dashed #ddd; }
-      .empty-box > div:last-child { border-bottom: none; }
-
-      /* --- 2. 收據樣式 (強制直向 A4) 先保留穩定版 --- */
+      /* --- 2. 收據樣式 (強制直向 A4) 暫時不變 --- */
       .page-receipts {
         page: portrait_page;
         page-break-after: always;
@@ -147,17 +134,8 @@
       .receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
       .receipt-card:nth-child(3) { border-right: 1px dashed #999; }
       .receipt-card:nth-child(4) { }
-      
-      .receipt-inner {
-        width: 100%; height: 100%;
-        display: flex; flex-direction: row; justify-content: space-between;
-        writing-mode: vertical-rl; text-orientation: upright;
-        font-family: "DFKai-sb", "標楷體", serif;
-      }
-      .r-line {
-        display: flex; flex-direction: row; justify-content: space-between; align-items: center;
-        font-size: 18px; height: 100%;
-      }
+      .receipt-inner { width: 100%; height: 100%; display: flex; flex-direction: row; justify-content: space-between; writing-mode: vertical-rl; text-orientation: upright; font-family: "DFKai-sb", "標楷體", serif; }
+      .r-line { display: flex; flex-direction: row; justify-content: space-between; align-items: center; font-size: 18px; height: 100%; }
     }
   </style>
 </head>
@@ -358,7 +336,7 @@
     }
 
     // =========================================
-    // 🖨️ 獨立按鈕 1：絕對座標 CSS Grid 總表 (永不跑位)
+    // 🖨️ 獨立按鈕 1：無敵畫布總表 (絕對座標版)
     // =========================================
     function printMap() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
@@ -367,72 +345,96 @@
         
         let printDiv = document.getElementById('print-area');
         let mainApp = document.getElementById('main-app');
-        let periodStr = `民國 <span style="font-family:sans-serif; margin: 0 2px;">${currentYear}</span> 年 <span style="font-family:sans-serif; margin: 0 2px;">${currentMonth}~${currentMonth+1}</span> 月份`;
         
-        // 🌟 嚴格 5 格，絕不印未繳費 🌟
-        function getGridBox(id, row, col) {
-           let style = `grid-row: ${row}; grid-column: ${col};`;
-           let s = globalSpaces.find(x => x.SpaceID == id);
-           
-           if(!s || !s.Name) {
-               return `<div class="map-box empty-box" style="${style}"><div class="box-id">${id}</div><div></div><div></div><div></div><div></div></div>`;
-           }
-           return `<div class="map-box" style="${style}">
-             <div class="box-id">${s.SpaceID}</div>
-             <div class="box-name">${s.Name}</div>
-             <div class="box-text">${s.LicensePlate || ''}</div>
-             <div class="box-text">${s.Phone || ''}</div>
-             <div>&nbsp;</div>
-           </div>`;
+        // 取得車位資料的 Helper
+        function getSpace(id) {
+            let s = globalSpaces.find(x => x.SpaceID == id);
+            if(!s || !s.Name) return { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;' };
+            return { id: s.SpaceID, name: s.Name, plate: s.LicensePlate || '&nbsp;', phone: s.Phone || '&nbsp;' };
         }
 
-        let mapHtml = `<div class="page-map">`;
-        mapHtml += `<div class="map-title">珠靈殿停車場 位置與繳費總表 (${periodStr})</div>`;
-        mapHtml += `<div class="map-grid">`;
-        
-        // 第 1 列 (15~1) -> grid-row: 1, grid-column: 1~13
         const topIds = ['15','13','12','11','10','9','8','7','6','5','3','2','1'];
-        topIds.forEach((id, idx) => { mapHtml += getGridBox(id, 1, idx + 1); });
+        const botIdsRow1 = ['16','17','18','19','20','21','22','23','25','26'];
+        const botIdsRow2 = ['37','36','35','33','32','31','30','29','28','27'];
+        const rightIds = ['39-2', '39-1', '39', '38'];
+
+        let mapHtml = `<div class="page-map">`;
         
-        // 右側 39 家族：被物理限制在第 15 欄 (grid-column: 15)
-        mapHtml += getGridBox('39-2', 3, 15);
-        mapHtml += getGridBox('39-1', 4, 15);
-        mapHtml += getGridBox('39',   5, 15);
-        mapHtml += getGridBox('38',   6, 15); // 38號死死釘在第15欄，絕對不往左跑！
-
-        // 第 4 列 (16~26) -> grid-row: 4, grid-column: 1~10
-        const midIds = ['16','17','18','19','20','21','22','23','25','26'];
-        midIds.forEach((id, idx) => { mapHtml += getGridBox(id, 4, idx + 1); });
-
-        // 第 5 列 (37~27) -> grid-row: 5, grid-column: 1~10
-        const botIds = ['37','36','35','33','32','31','30','29','28','27'];
-        botIds.forEach((id, idx) => { mapHtml += getGridBox(id, 5, idx + 1); });
-
-        // 入口 SVG (放置在第 6 列、第 11 欄與第 12 欄之間)
-        mapHtml += `<div style="grid-row: 6; grid-column: 11 / span 2; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                      <svg width="45" height="35" viewBox="0 0 45 35">
-                         <polygon points="22.5,0 0,35 45,35" fill="white" stroke="black" stroke-width="1.5"/>
-                         <text x="22.5" y="28" font-size="14" text-anchor="middle" font-weight="bold" fill="black" font-family="標楷體">入口</text>
-                      </svg>
+        // 🌟 1. 標題：上方精準 3cm 留白 🌟
+        mapHtml += `<div style="position:absolute; top:35px; width:100%; text-align:center; font-size:38px; font-weight:bold; letter-spacing:6px; font-family:'標楷體', serif;">
+                      民國 <span style="font-family:sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        // 樹木 SVG (釘死在 38 號下方，也就是第 7 列、第 15 欄)
-        mapHtml += `<div style="grid-row: 7; grid-column: 15; display:flex; align-items:flex-start; justify-content:center; padding-top: 5px;">
-                      <svg width="40" height="55" viewBox="0 0 50 70">
-                         <rect x="21" y="50" width="8" height="20" fill="#5c4033" stroke="black" stroke-width="1"/>
-                         <polygon points="25,0 5,30 45,30" fill="#228B22" stroke="black" stroke-width="1.5"/>
-                         <polygon points="25,15 0,45 50,45" fill="#228B22" stroke="black" stroke-width="1.5"/>
-                         <polygon points="25,30 -5,60 55,60" fill="#228B22" stroke="black" stroke-width="1.5"/>
-                      </svg>
-                    </div>`;
+        // 🌟 2. 上半部 (15~1) 🌟
+        mapHtml += `<div style="position:absolute; top:130px; left:0; width:100%;">`;
+        mapHtml += `<table class="excel-map">`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; // 第 5 格絕對不印未繳費
+        mapHtml += `</table></div>`;
 
-        // 建發水工程公司 指標 (第 7 列、第 8 到 10 欄)
-        mapHtml += `<div style="grid-row: 7; grid-column: 8 / span 3; text-align: center; font-weight: bold; padding-top: 5px;">
-                        <div style="font-size:22px; font-weight:900; line-height: 1;">↑</div>
-                        <div style="font-size:16px; margin-top: 2px;">建發水工程公司</div>
-                    </div>`;
+        // 🌟 3. 左下半部 (16~26, 37~27)：往下移動超過 2 個車位的距離！ 🌟
+        // 寬度設定為 10/13 ≈ 76.92%，這樣第16格會精準對齊第15格
+        mapHtml += `<div style="position:absolute; top:420px; left:0; width:76.92%;">`;
+        mapHtml += `<table class="excel-map">`;
+        // Row 1 (16~26)
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
+        // Row 2 (37~27) - 黏在一起
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
+        mapHtml += `</table></div>`;
 
-        mapHtml += `</div></div>`;
+        // 🌟 4. 右側特殊區塊 (39系列 + 38)：從 39-2 一路疊到 38，絕對貼齊右邊 🌟
+        mapHtml += `<div style="position:absolute; top:360px; right:15px; width:13%;">`;
+        mapHtml += `<table class="excel-map right-map">`;
+        rightIds.forEach(id => {
+            let s = getSpace(id);
+            mapHtml += `<tr>
+                <td style="width:70%; text-align:center; padding:8px;">
+                    <div class="m-name" style="margin-bottom:3px;">${s.name}</div>
+                    <div class="m-text">${s.plate}</div>
+                    <div class="m-text">${s.phone}</div>
+                </td>
+                <td class="m-id" style="width:30%; vertical-align:middle; font-size:18px;">${id}</td>
+            </tr>`;
+        });
+        mapHtml += `</table></div>`;
+
+        // 🌟 5. 圖形與指標：用絕對座標釘死位置 🌟
+        // 入口三角形 (定位在左下表格的右側外圍)
+        mapHtml += `<div style="position:absolute; bottom:50px; left:67%;">
+            <svg width="80" height="50" viewBox="0 0 80 50">
+                <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
+                <text x="40" y="40" font-size="18" text-anchor="middle" font-weight="bold" font-family="Microsoft JhengHei">入口</text>
+            </svg>
+        </div>`;
+
+        // 樹木 (定位在入口與 38 號之間)
+        mapHtml += `<div style="position:absolute; bottom:15px; right:15%;">
+            <svg width="100" height="120" viewBox="0 0 100 120">
+                <rect x="42" y="90" width="16" height="30" fill="#5c4033" stroke="black" stroke-width="1.5"/>
+                <polygon points="50,0 10,40 90,40" fill="#228B22" stroke="black" stroke-width="1.5"/>
+                <polygon points="50,25 0,70 100,70" fill="#228B22" stroke="black" stroke-width="1.5"/>
+                <polygon points="50,50 -10,100 110,100" fill="#228B22" stroke="black" stroke-width="1.5"/>
+            </svg>
+        </div>`;
+
+        // 底部文字指標 (置中於左下半部)
+        mapHtml += `<div style="position:absolute; bottom:0; left:38.46%; transform:translateX(-50%); text-align:center; font-weight:bold;">
+            <div style="font-size:24px; line-height:1;">↑</div>
+            <div style="font-size:16px; margin-top:5px;">建發水工程公司</div>
+        </div>`;
+
+        mapHtml += `</div>`; // End page-map
         
         printDiv.innerHTML = mapHtml;
         mainApp.style.display = 'none';
