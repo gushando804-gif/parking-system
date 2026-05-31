@@ -78,7 +78,7 @@
     #print-area { display: none; }
 
     /* =========================================
-       🖨️ 列印專屬 CSS：絕對不換頁結界模式 (防閃退)
+       🖨️ 列印專屬 CSS：防閃退結界模式
        ========================================= */
     @media print {
       body { background-color: #fff; margin: 0; padding: 0; }
@@ -92,16 +92,18 @@
       }
       
       @page { margin: 5mm; }
-      @page landscape_page { size: A4 landscape; margin: 5mm; }
+      /* 🌟 橫印總表：下方邊界設定為 0mm 🌟 */
+      @page landscape_page { size: A4 landscape; margin: 5mm 5mm 0mm 5mm; }
       @page portrait_page { size: A4 portrait; margin: 5mm; }
 
-      /* --- 1. 總表樣式 (強制鎖死 A4 橫向毫米級畫布) --- */
+      /* --- 1. 總表樣式 (絕對座標防跑版畫布) --- */
       .page-map {
         page: landscape_page;
         position: relative;
         width: 100%; 
-        height: 190mm; 
-        max-height: 190mm; 
+        /* 🌟 下方邊界歸零後，高度可以拉長到 200mm，讓下方更有空間 🌟 */
+        height: 200mm; 
+        max-height: 200mm; 
         overflow: hidden; 
         box-sizing: border-box;
       }
@@ -338,7 +340,7 @@
     }
 
     // =========================================
-    // 🖨️ 獨立按鈕 1：無敵畫布總表 (乾淨版：移除建發與箭頭)
+    // 🖨️ 獨立按鈕 1：總表 (0mm 下方邊界)
     // =========================================
     function printMap() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
@@ -390,7 +392,7 @@
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
         mapHtml += `</table></div>`;
 
-        // 🌟 4. 右側特殊區塊 (39系列 + 38) 🌟
+        // 🌟 4. 右側特殊區塊 (39系列) 🌟
         mapHtml += `<div style="position:absolute; top:52%; right:15px; width:13%;">`;
         mapHtml += `<table class="excel-map right-map">`;
         rightIds.forEach(id => {
@@ -406,8 +408,7 @@
         });
         mapHtml += `</table></div>`;
 
-        // 🌟 5. 圖形歸位 (已移除建發水工程公司與小箭頭) 🌟
-        // 入口標籤 
+        // 🌟 5. 圖形歸位 🌟
         mapHtml += `<div style="position:absolute; bottom:5%; left:78%; width:8%; text-align:center;">
             <svg width="60" height="40" viewBox="0 0 80 50">
                 <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
@@ -415,7 +416,6 @@
             </svg>
         </div>`;
 
-        // 大樹 
         mapHtml += `<div style="position:absolute; bottom:0; right:0; width:14%; text-align:center;">
             <svg width="75" height="100" viewBox="0 0 100 120">
                 <rect x="42" y="90" width="16" height="30" fill="#5c4033" stroke="black" stroke-width="1.5"/>
@@ -428,13 +428,11 @@
         mapHtml += `</div>`; 
         
         printDiv.innerHTML = mapHtml;
-        
-        // 延遲呼叫印表機，防止 iOS 預覽載入不及閃退
         setTimeout(() => { window.print(); }, 100);
     }
 
     // =========================================
-    // 🖨️ 獨立按鈕 2：收據穩定墊檔版 (防閃退)
+    // 🖨️ 獨立按鈕 2：收據穩定墊檔版
     // =========================================
     function printReceipts() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
@@ -495,8 +493,6 @@
         }
         
         printDiv.innerHTML = receiptsHtml;
-        
-        // 延遲呼叫印表機，防止 iOS 預覽載入不及閃退
         setTimeout(() => { window.print(); }, 100);
     }
 
