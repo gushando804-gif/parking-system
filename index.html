@@ -69,83 +69,102 @@
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
     /* =========================================
-       🖨️ 終極防呆列印：Chrome 獨立紙張設定 + 絕對定位
+       🖨️ 終極完美列印：直印 A4 + 完整全車位地圖 + 完美置中收據
        ========================================= */
     @media print {
+      /* 強制設定全文件為 A4 直向 (Portrait) */
+      @page { size: A4 portrait; margin: 10mm; } 
+      
       body * { visibility: hidden; }
       #print-area, #print-area * { visibility: visible; }
       #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; color: #000; font-family: "Microsoft JhengHei", "PMingLiU", sans-serif; }
       
-      /* 🌟 自動切換紙張方向的神級語法 🌟 */
-      @page { margin: 10mm; }
-      @page landscape_page { size: A4 landscape; }
-      @page portrait_page { size: A4 portrait; }
-
-      /* --- 1. 總表頁 (自動橫向印) --- */
-      .page-landscape {
-        page: landscape_page;
+      /* --- 1. 總表黑魔法：旋轉變橫向 --- */
+      .page-landscape-wrapper {
+        width: 190mm;  /* A4 寬度扣除邊界 */
+        height: 277mm; /* A4 高度扣除邊界 */
+        position: relative;
+        overflow: hidden;
         page-break-after: always;
-        width: 100%;
+      }
+      .map-rotated-content {
+        width: 277mm;  /* 展開成橫向寬度 */
+        height: 190mm; /* 展開成橫向高度 */
+        position: absolute;
+        top: 0;
+        left: 190mm; /* 把原點推到右上角 */
+        transform-origin: top left;
+        transform: rotate(90deg); /* 順時針轉 90 度，完美填滿直向版面 */
+        background: #fff;
+        padding: 5mm 10mm; 
+        box-sizing: border-box;
       }
       
-      .map-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; }
+      .map-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; padding-top: 5mm;}
       .map-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 4px; width: 100%; }
       
-      /* 🌟 嚴格 5 格標準車位框 🌟 */
+      /* 🌟 嚴格 5 格標準車位框，絕對不出現未繳費文字 🌟 */
       .map-box { 
         display: flex; flex-direction: column; 
-        border: 1px solid #333; height: 110px; 
+        border: 1px solid #333; height: 85px; 
         box-sizing: border-box; background: #fff; 
       }
       .map-box > div { 
         flex: 1; display: flex; align-items: center; justify-content: center; 
-        border-bottom: 1px solid #333; font-size: 13px; color: #000; 
-        white-space: nowrap; overflow: hidden;
+        border-bottom: 1px solid #333; font-size: 11px; color: #000; 
+        white-space: nowrap; overflow: hidden; font-weight: normal;
       }
       .map-box > div:last-child { border-bottom: none; }
+      .box-id { background: #e9ecef !important; font-weight: bold; font-size: 13px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .box-name { font-weight: bold !important; font-size: 12px !important; }
       
-      .box-id { background: #e9ecef !important; font-weight: bold; font-size: 15px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .box-name { font-weight: bold; font-size: 14px; }
-      
-      .empty-box { background: #f9f9f9 !important; border: 1px dashed #aaa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .empty-box > div { border-bottom: 1px dashed #ddd; }
-      .empty-box > div:last-child { border-bottom: none; }
+      .box-spacer { grid-column: span 12; }
+      .empty-box { background: #f9f9f9; border: 1px dashed #aaa; }
+      .empty-box > div { border: none !important; }
 
-      /* --- 2. 收據頁 (自動直向印) --- */
-      .page-portrait {
-        page: portrait_page;
+      /* --- 2. 十字裁切收據 (2x2 置中網格) --- */
+      .receipt-page-wrapper {
+        width: 190mm; 
+        height: 277mm; 
+        display: flex;
+        justify-content: center;
+        align-items: center;
         page-break-after: always;
-        width: 100%;
-        height: 277mm; /* A4 高度扣除邊界 */
-        display: grid; 
-        grid-template-columns: 1fr 1fr; /* 切兩半 */
-        grid-template-rows: 1fr 1fr;    /* 切兩半 */
       }
-      
+      .receipt-page { 
+        width: 100%; 
+        height: 100%; 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        grid-template-rows: 1fr 1fr; 
+      }
+      .receipt-card { 
+        box-sizing: border-box; 
+        padding: 20mm; /* 收據內部留白 */
+      }
       /* 🌟 畫出十字裁切線 🌟 */
-      .receipt-card { position: relative; box-sizing: border-box; }
-      .receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
-      .receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
-      .receipt-card:nth-child(3) { border-right: 1px dashed #999; }
+      .receipt-card:nth-child(1) { border-right: 1px dashed #666; border-bottom: 1px dashed #666; }
+      .receipt-card:nth-child(2) { border-bottom: 1px dashed #666; }
+      .receipt-card:nth-child(3) { border-right: 1px dashed #666; }
       .receipt-card:nth-child(4) { }
       
-      /* 🌟 絕對定位黑魔法：文字 100% 釘死在你截圖的位置 🌟 */
-      .r-text {
-        position: absolute;
+      /* 🌟 完美 Flex 空間均分法：復刻 Excel 文字排版 🌟 */
+      .receipt-inner {
+        width: 100%; height: 100%;
+        display: flex;
+        flex-direction: column; /* 直書的行，由右向左排 */
+        justify-content: space-between;
         writing-mode: vertical-rl;
         text-orientation: upright;
         font-family: "DFKai-sb", "標楷體", serif;
       }
-      .r-name-col  { right: 10%; top: 15%; font-size: 22px; letter-spacing: 2px; }
-      .r-item-col  { right: 35%; top: 20%; font-size: 18px; letter-spacing: 2px; }
-      .r-amt-col   { right: 60%; top: 20%; font-size: 18px; letter-spacing: 2px; }
-      .r-stamp-col { left: 15%; bottom: 15%; font-size: 20px; font-weight: bold; letter-spacing: 4px; }
-      .r-date-col  { left: 5%;  bottom: 10%; font-size: 14px; font-family: "Microsoft JhengHei", sans-serif; letter-spacing: 1px; }
-
-      .val-name  { font-family: "Microsoft JhengHei", sans-serif; font-size: 26px; font-weight: bold; margin: 10px 0; }
-      .val-space { font-family: "Microsoft JhengHei", sans-serif; font-size: 26px; font-weight: bold; margin: 10px 0; }
-      .val-amt   { font-family: "Microsoft JhengHei", sans-serif; font-size: 24px; font-weight: bold; margin: 10px 0; }
-      .val-num   { font-family: sans-serif; font-weight: bold; margin: 2px 0; }
+      .r-line {
+        display: flex;
+        flex-direction: row; /* 單行內的字，由上向下排 */
+        justify-content: space-between; /* 均分上下空間 */
+        align-items: center;
+        height: 100%;
+      }
     }
   </style>
 </head>
@@ -201,7 +220,7 @@
         <div class="btn-row">
           <button class="btn btn-save" id="btn-save" onclick="saveData()">儲存</button>
           <button class="btn btn-leave" id="btn-leave" onclick="leaveSpace()">退租</button>
-          <button class="btn-cancel" onclick="closeModal()">取消</button>
+          <button class="btn btn-cancel" onclick="closeModal()">取消</button>
         </div>
       </div>
     </div>
@@ -215,18 +234,16 @@
         </p>
         <div class="btn-row">
           <button class="btn btn-save" onclick="confirmCopy()" style="font-size: 22px; padding: 15px;">確定匯入</button>
-          <button class="btn-cancel" onclick="closeCopyModal()" style="font-size: 22px; padding: 15px; margin-left: 10px;">先不要</button>
+          <button class="btn btn-cancel" onclick="closeCopyModal()" style="font-size: 22px; padding: 15px; margin-left: 10px;">先不要</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 🌟 物理隔離列印區塊 🌟 -->
   <div id="print-area" style="display: none;"></div>
 
   <script>
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
-    // GAS 網址已完美填入
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
     let currentYear = 115;
@@ -359,7 +376,7 @@
         return res;
     }
 
-    // 🌟 終極列印功能 🌟
+    // 🌟 終極列印功能：直印旋轉黑魔法 + 收據中心線完美均分排版 🌟
     function printReport() {
         if (!globalSpaces || globalSpaces.length === 0) {
             alert("⚠️ 資料尚未載入完成，請稍等幾秒鐘後再按列印！");
@@ -370,20 +387,19 @@
         let mainApp = document.getElementById('main-app');
         let periodStr = `民國 ${currentYear} 年 ${currentMonth}~${currentMonth+1} 月份`;
         
-        // --- 1. 第一頁：利用 page 屬性自動變橫向，嚴格 5 格 U型總表 ---
+        // --- 1. 第一頁：嚴格 5 格 U型總表（補回 27~39 號車位） ---
         const topIds = ['15','13','12','11','10','9','8','7','6','5','3','2','1'];
-        const botIds = ['16','17','18','19','20','21','22','23','25','26'];
+        const midIds = ['16','17','18','19','20','21','22','23','25','26'];
+        const botIds = ['37','36','35','33','32','31','30','29','28','27'];
 
         function getBox(id) {
            if(!id) return '';
            let s = globalSpaces.find(x => x.SpaceID == id);
-           
-           // 如果是空位，印出 5 個空的虛線格
+           // 如果是空位，給 5 個空的虛線格
            if(!s || !s.Name) {
                return `<div class="map-box empty-box"><div class="box-id">${id}</div><div></div><div></div><div></div><div></div></div>`;
            }
-           
-           // 🌟 有人租：嚴格 5 格，第五格永遠留白，不印任何繳費字樣 🌟
+           // 🌟 嚴格 5 格，第五格永遠留白，不印「未繳費」 🌟
            return `<div class="map-box">
              <div class="box-id">${s.SpaceID}</div>
              <div class="box-name">${s.Name}</div>
@@ -393,36 +409,64 @@
            </div>`;
         }
 
-        let mapHtml = `<div class="page-landscape">`;
+        let mapHtml = `<div class="page-landscape-wrapper"><div class="map-rotated-content">`;
         mapHtml += `<div class="map-title">珠靈殿停車場 位置與繳費總表 (${periodStr})</div>`;
         mapHtml += `<div class="map-grid">`;
         
         // 第一排 (15~1)
         topIds.forEach(id => { mapHtml += getBox(id); });
         
-        // 第二排 (中間車道 + 39-2)
+        // 第二排 (中間空白 + 右邊 39-2)
         mapHtml += `<div style="grid-column: 1 / span 12;"></div>`; 
         mapHtml += `<div style="grid-column: 13;">${getBox('39-2')}</div>`;
         
-        // 第三排 (中間車道 + 39-1)
+        // 第三排 (中間空白 + 右邊 39-1)
         mapHtml += `<div style="grid-column: 1 / span 12;"></div>`; 
         mapHtml += `<div style="grid-column: 13;">${getBox('39-1')}</div>`;
         
-        // 第四排 (16~26)
+        // 第四排 (16~26 + 空白 + 39)
+        midIds.forEach(id => { mapHtml += getBox(id); });
+        mapHtml += `<div style="grid-column: 11 / span 2;"></div>`; 
+        mapHtml += `<div style="grid-column: 13;">${getBox('39')}</div>`;
+        
+        // 第五排 (37~27 + 入口圖案 + 松樹圖案 + 38)
         botIds.forEach(id => { mapHtml += getBox(id); });
-        mapHtml += `<div style="grid-column: span 3;"></div>`; // 補齊剩下的空格
+        // 入口 (Col 11)
+        mapHtml += `<div style="display:flex; align-items:flex-end; justify-content:center; padding-bottom:5px;">
+                      <svg width="60" height="40" viewBox="0 0 60 40">
+                         <polygon points="30,0 0,40 60,40" fill="white" stroke="black" stroke-width="1.5"/>
+                         <text x="30" y="32" font-size="14" text-anchor="middle" font-weight="bold" fill="black">入口</text>
+                      </svg>
+                    </div>`;
+        // 樹 (Col 12)
+        mapHtml += `<div style="display:flex; align-items:flex-end; justify-content:center;">
+                      <svg width="50" height="70" viewBox="0 0 50 70">
+                         <rect x="21" y="50" width="8" height="20" fill="#5c4033" stroke="black" stroke-width="1"/>
+                         <polygon points="25,0 5,30 45,30" fill="#228B22" stroke="black" stroke-width="1.5"/>
+                         <polygon points="25,15 0,45 50,45" fill="#228B22" stroke="black" stroke-width="1.5"/>
+                         <polygon points="25,30 -5,60 55,60" fill="#228B22" stroke="black" stroke-width="1.5"/>
+                      </svg>
+                    </div>`;
+        mapHtml += `<div style="grid-column: 13;">${getBox('38')}</div>`;
         
-        mapHtml += `</div></div>`;
+        // 第六排 (建發水工程公司 指標)
+        mapHtml += `<div style="grid-column: 1 / span 7;"></div>`;
+        mapHtml += `<div style="grid-column: 8 / span 2; text-align: center; font-weight: bold; font-family: 'Microsoft JhengHei', sans-serif;">
+                        <div style="font-size:16px; font-weight:900;">↑</div>
+                        <div style="font-size:12px;">建發水工程公司</div>
+                    </div>`;
         
-        // --- 2. 第二頁起：十字裁切 2x2 置中收據 ---
+        mapHtml += `</div></div></div>`;
+        
+        // --- 2. 第二頁起：十字裁切 + Flex 完美均分排版收據 ---
         let receiptsHtml = '';
         let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
         
         for (let i = 0; i < validSpaces.length; i += 4) {
             let group = validSpaces.slice(i, i + 4);
-            receiptsHtml += `<div class="page-portrait">`;
+            receiptsHtml += `<div class="receipt-page-wrapper"><div class="receipt-page">`;
             
-            // 強制印滿 4 格，不足 4 張用空白格補齊以維持十字線
+            // 強制印滿 4 格，不足 4 張用空白格補齊以維持中心十字線
             for (let j = 0; j < 4; j++) {
                 if (j < group.length) {
                     let space = group[j];
@@ -430,21 +474,42 @@
                     let amt = space.Amount || '';
                     let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
                     
-                    // 🌟 絕對定位黑魔法：釘死排版位置 🌟
+                    // 🌟 空間均分黑魔法：保證文字位置完美貼合 Excel 🌟
                     receiptsHtml += `
                     <div class="receipt-card">
-                        <div class="r-text r-name-col">茲收到 <span class="val-name">${name}</span> 君</div>
-                        <div class="r-text r-item-col">承租本殿停車場 <span class="val-space">${space.SpaceID}</span> 號車位之清潔費</div>
-                        <div class="r-text r-amt-col">新台幣 <span class="val-amt">${displayAmt}</span> 元整</div>
-                        <div class="r-text r-stamp-col">珠靈殿管理委員會　此據</div>
-                        <div class="r-text r-date-col">中華民國 <span class="val-num">115</span> 年 <span class="val-num">${currentMonth}~${currentMonth+1}</span> 月份</div>
+                      <div class="receipt-inner">
+                        <div class="r-line" style="font-size: 20px; font-weight: bold; letter-spacing: 2px;">
+                          <span>茲收到</span>
+                          <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 26px;">${name}</span>
+                          <span>君</span>
+                        </div>
+                        <div class="r-line" style="font-size: 16px; letter-spacing: 1px;">
+                          <span>承租本殿停車場</span>
+                          <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 26px; font-weight: bold;">${space.SpaceID}</span>
+                          <span>號車位之清潔費</span>
+                        </div>
+                        <div class="r-line" style="font-size: 16px; letter-spacing: 1px;">
+                          <span>新台幣</span>
+                          <span style="font-family: 'Microsoft JhengHei', sans-serif; font-size: 24px; font-weight: bold;">${displayAmt}</span>
+                          <span>元整</span>
+                        </div>
+                        <div class="r-line" style="font-size: 18px; font-weight: bold; letter-spacing: 3px;">
+                          <span>珠靈殿管理委員會</span>
+                          <span>此據</span>
+                        </div>
+                        <div class="r-line" style="font-size: 14px; font-family: 'Microsoft JhengHei', sans-serif;">
+                          <span>中華民國</span>
+                          <span><b style="font-size: 16px;">115</b> 年</span>
+                          <span><b style="font-size: 16px;">${currentMonth}~${currentMonth+1}</b> 月</span>
+                          <span>份</span>
+                        </div>
+                      </div>
                     </div>`;
                 } else {
-                    // 補齊空的虛線格
                     receiptsHtml += `<div class="receipt-card"></div>`;
                 }
             }
-            receiptsHtml += `</div>`;
+            receiptsHtml += `</div></div>`;
         }
         
         // 合併列印
@@ -465,103 +530,4 @@
         alert("⚠️ 權限不足：您目前為「檢視者」，僅能查看車位狀態，無法進行修改！");
         return; 
       }
-      document.getElementById('modal-spaceId').value = space.SpaceID;
-      document.getElementById('modal-title').innerText = `管理車位：${space.SpaceID} 號`;
-      const select = document.getElementById('modal-name-select');
-      const customName = document.getElementById('modal-name-custom');
-      const phoneInput = document.getElementById('modal-phone');
-      const plateInput = document.getElementById('modal-plate');
-      
-      select.innerHTML = '<option value="">-- 請選擇客戶 --</option>';
-      globalCustomers.forEach(c => {
-         const opt = document.createElement('option');
-         opt.value = c.Name;
-         opt.text = c.Name;
-         opt.dataset.phone = c.Phone;
-         opt.dataset.plate = c.LicensePlate;
-         select.appendChild(opt);
-      });
-      select.innerHTML += '<option value="NEW">➕ 新增客戶 (手動輸入)</option>';
-      customName.style.display = 'none';
-
-      if (space.Status === "空位" || space.Status === "") {
-        document.getElementById('btn-leave').style.display = 'none';
-        document.getElementById('btn-save').innerText = '確定出租';
-        select.value = "";
-        phoneInput.value = "";
-        plateInput.value = "";
-        document.getElementById('modal-amount').value = "3600";
-        document.getElementById('modal-note').value = "";
-      } else {
-        document.getElementById('btn-leave').style.display = 'inline-block';
-        document.getElementById('btn-save').innerText = '儲存修改';
-        let found = false;
-        for(let i=0; i<select.options.length; i++) {
-           if(select.options[i].value === space.Name) { select.selectedIndex = i; found = true; break; }
-        }
-        if(!found) { select.value = "NEW"; customName.style.display = 'block'; customName.value = space.Name; }
-        phoneInput.value = space.Phone || "";
-        plateInput.value = space.LicensePlate || "";
-        document.getElementById('modal-amount').value = space.Amount || "";
-        document.getElementById('modal-note').value = space.Note || "";
-      }
-      document.getElementById('editModal').style.display = 'block';
-    }
-
-    function handleCustomerSelect() {
-       const select = document.getElementById('modal-name-select');
-       const customName = document.getElementById('modal-name-custom');
-       const phoneInput = document.getElementById('modal-phone');
-       const plateInput = document.getElementById('modal-plate');
-       if (select.value === "NEW") {
-          customName.style.display = 'block'; phoneInput.value = ''; plateInput.value = '';
-       } else if (select.value === "") {
-          customName.style.display = 'none'; phoneInput.value = ''; plateInput.value = '';
-       } else {
-          customName.style.display = 'none';
-          const selectedOption = select.options[select.selectedIndex];
-          phoneInput.value = selectedOption.dataset.phone || '';
-          plateInput.value = selectedOption.dataset.plate || '';
-       }
-    }
-
-    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
-
-    function saveData() {
-      var spaceId = document.getElementById('modal-spaceId').value;
-      var name = document.getElementById('modal-name-select').value;
-      if (name === "NEW") { name = document.getElementById('modal-name-custom').value.trim(); }
-      var phone = document.getElementById('modal-phone').value;
-      var plate = document.getElementById('modal-plate').value;
-      var amount = document.getElementById('modal-amount').value.trim();
-      var note = document.getElementById('modal-note').value.trim();
-      
-      if (!name) { alert("請選擇或輸入姓名！"); return; }
-      closeModal();
-      sendUpdateRequest(spaceId, 'update', name, phone, plate, amount, note);
-    }
-
-    function leaveSpace() {
-      var spaceId = document.getElementById('modal-spaceId').value;
-      if(confirm(`確定要將 ${spaceId} 號車位退租，並清空客戶資料嗎？`)) {
-        closeModal();
-        sendUpdateRequest(spaceId, 'leave', '', '', '', '', '');
-      }
-    }
-
-    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '') {
-      document.getElementById('status-msg').style.display = 'block';
-      document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
-      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, period: getPeriodString(), uid: globalUserId };
-      try {
-        const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
-        const result = await response.json();
-        if(result.status === 'success') { alert(result.msg); loadData(); } 
-        else { alert("錯誤：" + result.msg); document.getElementById('status-msg').style.display = 'none'; }
-      } catch (err) { alert("連線失敗：" + err); document.getElementById('status-msg').style.display = 'none'; }
-    }
-
-    initAuth();
-  </script>
-</body>
-</html>
+      document.getElementById('modal
