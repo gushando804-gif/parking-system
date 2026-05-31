@@ -530,4 +530,103 @@
         alert("⚠️ 權限不足：您目前為「檢視者」，僅能查看車位狀態，無法進行修改！");
         return; 
       }
-      document.getElementById('modal
+      document.getElementById('modal-spaceId').value = space.SpaceID;
+      document.getElementById('modal-title').innerText = `管理車位：${space.SpaceID} 號`;
+      const select = document.getElementById('modal-name-select');
+      const customName = document.getElementById('modal-name-custom');
+      const phoneInput = document.getElementById('modal-phone');
+      const plateInput = document.getElementById('modal-plate');
+      
+      select.innerHTML = '<option value="">-- 請選擇客戶 --</option>';
+      globalCustomers.forEach(c => {
+         const opt = document.createElement('option');
+         opt.value = c.Name;
+         opt.text = c.Name;
+         opt.dataset.phone = c.Phone;
+         opt.dataset.plate = c.LicensePlate;
+         select.appendChild(opt);
+      });
+      select.innerHTML += '<option value="NEW">➕ 新增客戶 (手動輸入)</option>';
+      customName.style.display = 'none';
+
+      if (space.Status === "空位" || space.Status === "") {
+        document.getElementById('btn-leave').style.display = 'none';
+        document.getElementById('btn-save').innerText = '確定出租';
+        select.value = "";
+        phoneInput.value = "";
+        plateInput.value = "";
+        document.getElementById('modal-amount').value = "3600";
+        document.getElementById('modal-note').value = "";
+      } else {
+        document.getElementById('btn-leave').style.display = 'inline-block';
+        document.getElementById('btn-save').innerText = '儲存修改';
+        let found = false;
+        for(let i=0; i<select.options.length; i++) {
+           if(select.options[i].value === space.Name) { select.selectedIndex = i; found = true; break; }
+        }
+        if(!found) { select.value = "NEW"; customName.style.display = 'block'; customName.value = space.Name; }
+        phoneInput.value = space.Phone || "";
+        plateInput.value = space.LicensePlate || "";
+        document.getElementById('modal-amount').value = space.Amount || "";
+        document.getElementById('modal-note').value = space.Note || "";
+      }
+      document.getElementById('editModal').style.display = 'block';
+    }
+
+    function handleCustomerSelect() {
+       const select = document.getElementById('modal-name-select');
+       const customName = document.getElementById('modal-name-custom');
+       const phoneInput = document.getElementById('modal-phone');
+       const plateInput = document.getElementById('modal-plate');
+       if (select.value === "NEW") {
+          customName.style.display = 'block'; phoneInput.value = ''; plateInput.value = '';
+       } else if (select.value === "") {
+          customName.style.display = 'none'; phoneInput.value = ''; plateInput.value = '';
+       } else {
+          customName.style.display = 'none';
+          const selectedOption = select.options[select.selectedIndex];
+          phoneInput.value = selectedOption.dataset.phone || '';
+          plateInput.value = selectedOption.dataset.plate || '';
+       }
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    function saveData() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      var name = document.getElementById('modal-name-select').value;
+      if (name === "NEW") { name = document.getElementById('modal-name-custom').value.trim(); }
+      var phone = document.getElementById('modal-phone').value;
+      var plate = document.getElementById('modal-plate').value;
+      var amount = document.getElementById('modal-amount').value.trim();
+      var note = document.getElementById('modal-note').value.trim();
+      
+      if (!name) { alert("請選擇或輸入姓名！"); return; }
+      closeModal();
+      sendUpdateRequest(spaceId, 'update', name, phone, plate, amount, note);
+    }
+
+    function leaveSpace() {
+      var spaceId = document.getElementById('modal-spaceId').value;
+      if(confirm(`確定要將 ${spaceId} 號車位退租，並清空客戶資料嗎？`)) {
+        closeModal();
+        sendUpdateRequest(spaceId, 'leave', '', '', '', '', '');
+      }
+    }
+
+    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '') {
+      document.getElementById('status-msg').style.display = 'block';
+      document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
+      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, period: getPeriodString(), uid: globalUserId };
+      try {
+        const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if(result.status === 'success') { alert(result.msg); loadData(); } 
+        else { alert("錯誤：" + result.msg); document.getElementById('status-msg').style.display = 'none'; }
+      } catch (err) { alert("連線失敗：" + err); document.getElementById('status-msg').style.display = 'none'; }
+    }
+
+    initAuth();
+  </script>
+</body>
+</html>
