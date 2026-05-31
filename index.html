@@ -74,42 +74,44 @@
     .btn-leave { background-color: #dc3545; color: white; display: none; }
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
-    /* 🌟 手機端預設隱藏列印區塊，防止擠壓畫面 🌟 */
+    /* 🌟 手機端預設隱藏列印區塊 🌟 */
     #print-area { display: none; }
 
     /* =========================================
-       🖨️ 列印專屬 CSS：純淨隔離模式 (解決 iOS 閃退)
+       🖨️ 列印專屬 CSS：絕對不換頁結界模式
        ========================================= */
     @media print {
       body { background-color: #fff; margin: 0; padding: 0; }
       
-      /* 🌟 只有在印表機啟動時，才強制隱藏主畫面並顯示列印區 🌟 */
       #main-app, #auth-screen, .modal { display: none !important; }
       #print-area { 
         display: block !important; 
         position: absolute; left: 0; top: 0; width: 100%; 
-        color: #000; font-family: Arial, "DFKai-sb", "標楷體", serif; 
+        color: #000; 
+        /* 🌟 讓中文字自動變標楷體，英文數字維持 Arial 🌟 */
+        font-family: Arial, "DFKai-sb", "標楷體", serif; 
       }
       
       @page { margin: 5mm; }
       @page landscape_page { size: A4 landscape; margin: 5mm; }
       @page portrait_page { size: A4 portrait; margin: 5mm; }
 
-      /* --- 1. 總表樣式 (強制鎖死 A4 橫向毫米級畫布) --- */
+      /* --- 1. 總表樣式 (強制不准換頁的結界) --- */
       .page-map {
         page: landscape_page;
-        page-break-after: always;
         position: relative;
-        /* 🌟 強制給定寬高，防止 iOS 預覽縮放變形 🌟 */
-        width: 287mm; 
-        height: 200mm; 
+        width: 100%; 
+        /* 🌟 核彈級防跑版：高度鎖死在 190mm，超出這個高度的內容直接隱藏，絕不生成第二頁！ 🌟 */
+        height: 190mm; 
+        max-height: 190mm; 
+        overflow: hidden; 
         box-sizing: border-box;
       }
       
       .excel-map { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
       .excel-map td { 
         border: 1.5px solid #000; 
-        height: 28px; 
+        height: 27px; /* 稍微縮小1px確保5格完美塞入高度內 */
         overflow: hidden; 
         white-space: nowrap; 
         word-break: break-all;
@@ -120,7 +122,7 @@
       
       .right-map td { border: 1.5px solid #000; }
       
-      /* --- 2. 收據樣式 (強制鎖死 A4 直向毫米級畫布) --- */
+      /* --- 2. 收據樣式 (強制鎖死 A4 直向) --- */
       .page-receipts {
         page: portrait_page;
         page-break-after: always;
@@ -328,22 +330,12 @@
         return res.replace(/零$/, '');
     }
 
-    function setPrintOrientation(orientation) {
-        let oldStyle = document.getElementById('dynamic-print-style');
-        if (oldStyle) oldStyle.remove();
-        let style = document.createElement('style');
-        style.id = 'dynamic-print-style';
-        style.innerHTML = `@media print { @page { size: A4 ${orientation}; margin: 5mm; } }`;
-        document.head.appendChild(style);
-    }
-
     // =========================================
-    // 🖨️ 獨立按鈕 1：完美鎖死防閃退總表
+    // 🖨️ 獨立按鈕 1：無敵畫布總表 (防跑頁版)
     // =========================================
     function printMap() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         
-        setPrintOrientation('landscape'); 
         let printDiv = document.getElementById('print-area');
         
         function getSpace(id) {
@@ -359,13 +351,13 @@
 
         let mapHtml = `<div class="page-map">`;
         
-        // 🌟 1. 標題 🌟
-        mapHtml += `<div style="position:absolute; top:35px; width:100%; text-align:center; font-size:38px; font-weight:bold; letter-spacing:6px; font-family:'標楷體', serif;">
+        // 🌟 1. 標題：改用 top: 2% (適應任何螢幕比例) 🌟
+        mapHtml += `<div style="position:absolute; top:2%; width:100%; text-align:center; font-size:36px; font-weight:bold; letter-spacing:6px; font-family:'標楷體', serif;">
                       民國 <span style="font-family:sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        // 🌟 2. 上半部 (15~1) 🌟
-        mapHtml += `<div style="position:absolute; top:130px; left:0; width:100%;">`;
+        // 🌟 2. 上半部 (15~1) -> top: 16% 🌟
+        mapHtml += `<div style="position:absolute; top:16%; left:0; width:100%;">`;
         mapHtml += `<table class="excel-map">`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -374,8 +366,8 @@
         mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        // 🌟 3. 左下半部 (16~26, 37~27) 🌟
-        mapHtml += `<div style="position:absolute; top:390px; left:0; width:76.92%;">`;
+        // 🌟 3. 左下半部 (16~26, 37~27) -> top: 52% 🌟
+        mapHtml += `<div style="position:absolute; top:52%; left:0; width:76.92%;">`;
         mapHtml += `<table class="excel-map">`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -390,8 +382,8 @@
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
         mapHtml += `</table></div>`;
 
-        // 🌟 4. 右側特殊區塊 (39系列 + 38) 🌟
-        mapHtml += `<div style="position:absolute; top:390px; right:15px; width:13%;">`;
+        // 🌟 4. 右側特殊區塊 (39系列) -> top: 52% 🌟
+        mapHtml += `<div style="position:absolute; top:52%; right:15px; width:13%;">`;
         mapHtml += `<table class="excel-map right-map">`;
         rightIds.forEach(id => {
             let s = getSpace(id);
@@ -406,17 +398,17 @@
         });
         mapHtml += `</table></div>`;
 
-        // 🌟 5. 圖形歸位 🌟
-        // 入口 (微調 left: 78%)
-        mapHtml += `<div style="position:absolute; top:675px; left:78%; width:8%; text-align:center;">
+        // 🌟 5. 圖形與指標：改用 bottom 釘死，保證不超出第一頁！ 🌟
+        // 入口：距離底部 5%，往左靠到 78% (正對車道中央)
+        mapHtml += `<div style="position:absolute; bottom:5%; left:78%; width:8%; text-align:center;">
             <svg width="60" height="40" viewBox="0 0 80 50">
                 <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
                 <text x="40" y="40" font-size="18" text-anchor="middle" font-weight="bold" font-family="Microsoft JhengHei">入口</text>
             </svg>
         </div>`;
 
-        // 大樹 (微調 top: 685px)
-        mapHtml += `<div style="position:absolute; top:685px; right:0; width:14%; text-align:center;">
+        // 大樹：緊貼最底部 0%，靠右
+        mapHtml += `<div style="position:absolute; bottom:0; right:0; width:14%; text-align:center;">
             <svg width="75" height="100" viewBox="0 0 100 120">
                 <rect x="42" y="90" width="16" height="30" fill="#5c4033" stroke="black" stroke-width="1.5"/>
                 <polygon points="50,0 10,40 90,40" fill="#228B22" stroke="black" stroke-width="1.5"/>
@@ -425,21 +417,26 @@
             </svg>
         </div>`;
 
+        // 底部文字指標：緊貼最底部 0%
+        mapHtml += `<div style="position:absolute; bottom:0; left:38.46%; transform:translateX(-50%); text-align:center; font-weight:bold;">
+            <div style="font-size:24px; line-height:1;">↑</div>
+            <div style="font-size:16px; margin-top:5px;">建發水工程公司</div>
+        </div>`;
+
         mapHtml += `</div>`; 
         
         printDiv.innerHTML = mapHtml;
         
-        // 🌟 防 iOS 閃退黑魔法：交給 CSS 控制顯示，JS 僅延遲呼叫 Print 🌟
+        // 延遲呼叫印表機，防止 iOS 預覽載入不及閃退
         setTimeout(() => { window.print(); }, 100);
     }
 
     // =========================================
-    // 🖨️ 獨立按鈕 2：收據穩定墊檔版 (防閃退版)
+    // 🖨️ 獨立按鈕 2：收據穩定墊檔版 (防閃退)
     // =========================================
     function printReceipts() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         
-        setPrintOrientation('portrait'); 
         let printDiv = document.getElementById('print-area');
         
         let receiptsHtml = '';
@@ -495,8 +492,6 @@
         }
         
         printDiv.innerHTML = receiptsHtml;
-        
-        // 🌟 防 iOS 閃退黑魔法：交給 CSS 控制顯示，JS 僅延遲呼叫 Print 🌟
         setTimeout(() => { window.print(); }, 100);
     }
 
