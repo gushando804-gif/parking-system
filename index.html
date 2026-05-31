@@ -93,21 +93,15 @@
         page-break-after: always;
         position: relative; /* 開啟畫布模式 */
         width: 100%; 
-        height: 100%; /* A4 高度扣除 1cm 邊界，約 200mm */
+        height: 100%; 
         box-sizing: border-box;
         font-family: "Microsoft JhengHei", sans-serif;
       }
       
-      /* 🌟 原汁原味的獨立表格設定 🌟 */
-      .excel-map { 
-        width: 100%; 
-        border-collapse: collapse; 
-        text-align: center; 
-        table-layout: fixed; 
-      }
+      .excel-map { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
       .excel-map td { 
         border: 1.5px solid #000; 
-        height: 28px; /* 加大高度，讓 5 格更寬裕 */
+        height: 28px; /* 確保5格夠寬裕 */
         overflow: hidden; 
         white-space: nowrap; 
         word-break: break-all;
@@ -116,7 +110,6 @@
       .m-name { font-weight: bold; font-size: 16px; }
       .m-text { font-size: 13px; font-weight: bold; }
       
-      /* 右側 39 系列特殊表格 */
       .right-map td { border: 1.5px solid #000; }
       
       /* --- 2. 收據樣式 (強制直向 A4) 暫時不變 --- */
@@ -346,7 +339,6 @@
         let printDiv = document.getElementById('print-area');
         let mainApp = document.getElementById('main-app');
         
-        // 取得車位資料的 Helper
         function getSpace(id) {
             let s = globalSpaces.find(x => x.SpaceID == id);
             if(!s || !s.Name) return { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;' };
@@ -372,20 +364,18 @@
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; // 第 5 格絕對不印未繳費
+        mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        // 🌟 3. 左下半部 (16~26, 37~27)：往下移動超過 2 個車位的距離！ 🌟
-        // 寬度設定為 10/13 ≈ 76.92%，這樣第16格會精準對齊第15格
-        mapHtml += `<div style="position:absolute; top:420px; left:0; width:76.92%;">`;
+        // 🌟 3. 左下半部 (16~26, 37~27) 🌟
+        mapHtml += `<div style="position:absolute; top:390px; left:0; width:76.92%;">`;
         mapHtml += `<table class="excel-map">`;
-        // Row 1 (16~26)
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
-        // Row 2 (37~27) - 黏在一起
+        
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
@@ -393,13 +383,13 @@
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
         mapHtml += `</table></div>`;
 
-        // 🌟 4. 右側特殊區塊 (39系列 + 38)：從 39-2 一路疊到 38，絕對貼齊右邊 🌟
-        mapHtml += `<div style="position:absolute; top:360px; right:15px; width:13%;">`;
+        // 🌟 4. 右側特殊區塊 (39系列 + 38) 🌟
+        mapHtml += `<div style="position:absolute; top:390px; right:15px; width:13%;">`;
         mapHtml += `<table class="excel-map right-map">`;
         rightIds.forEach(id => {
             let s = getSpace(id);
             mapHtml += `<tr>
-                <td style="width:70%; text-align:center; padding:8px;">
+                <td style="width:70%; text-align:center; padding:4px;">
                     <div class="m-name" style="margin-bottom:3px;">${s.name}</div>
                     <div class="m-text">${s.plate}</div>
                     <div class="m-text">${s.phone}</div>
@@ -409,18 +399,18 @@
         });
         mapHtml += `</table></div>`;
 
-        // 🌟 5. 圖形與指標：用絕對座標釘死位置 🌟
-        // 入口三角形 (定位在左下表格的右側外圍)
-        mapHtml += `<div style="position:absolute; bottom:50px; left:67%;">
-            <svg width="80" height="50" viewBox="0 0 80 50">
+        // 🌟 5. 圖形與指標精準歸位 🌟
+        // 入口 (精準投放到 27 號與 38 號中間的透明空隙)
+        mapHtml += `<div style="position:absolute; top:620px; left:77.5%; width:9%; text-align:center;">
+            <svg width="60" height="40" viewBox="0 0 80 50">
                 <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
                 <text x="40" y="40" font-size="18" text-anchor="middle" font-weight="bold" font-family="Microsoft JhengHei">入口</text>
             </svg>
         </div>`;
 
-        // 樹木 (定位在入口與 38 號之間)
-        mapHtml += `<div style="position:absolute; bottom:15px; right:15%;">
-            <svg width="100" height="120" viewBox="0 0 100 120">
+        // 大樹 (精準綁定在右側 38 號表格的正下方)
+        mapHtml += `<div style="position:absolute; top:600px; right:15px; width:13%; text-align:center;">
+            <svg width="60" height="80" viewBox="0 0 100 120">
                 <rect x="42" y="90" width="16" height="30" fill="#5c4033" stroke="black" stroke-width="1.5"/>
                 <polygon points="50,0 10,40 90,40" fill="#228B22" stroke="black" stroke-width="1.5"/>
                 <polygon points="50,25 0,70 100,70" fill="#228B22" stroke="black" stroke-width="1.5"/>
@@ -428,13 +418,13 @@
             </svg>
         </div>`;
 
-        // 底部文字指標 (置中於左下半部)
-        mapHtml += `<div style="position:absolute; bottom:0; left:38.46%; transform:translateX(-50%); text-align:center; font-weight:bold;">
+        // 底部文字指標 (置中於左下半部下方)
+        mapHtml += `<div style="position:absolute; top:680px; left:38.46%; transform:translateX(-50%); text-align:center; font-weight:bold;">
             <div style="font-size:24px; line-height:1;">↑</div>
             <div style="font-size:16px; margin-top:5px;">建發水工程公司</div>
         </div>`;
 
-        mapHtml += `</div>`; // End page-map
+        mapHtml += `</div>`; 
         
         printDiv.innerHTML = mapHtml;
         mainApp.style.display = 'none';
