@@ -75,23 +75,8 @@
     
     .input-group { margin-bottom: 18px; }
     .input-group label { display: block; font-size: 20px; margin-bottom: 8px; font-weight: bold;}
-    
-    /* 🌟 字體全面升級：輸入框與選單放大至 24px 並強制加粗 🌟 */
-    .input-group select, .input-group input { 
-        width: 100%; 
-        padding: 14px; 
-        border: 2px solid #ccc; 
-        border-radius: 8px; 
-        font-size: 24px; 
-        font-weight: bold; /* 強制加粗 */
-        box-sizing: border-box; 
-    }
-    
-    /* 🌟 選單內部的選項也一併加粗放大 (依賴瀏覽器支援度) 🌟 */
-    .input-group select option { 
-        font-size: 24px; 
-        font-weight: bold; 
-    }
+    .input-group select, .input-group input { width: 100%; padding: 14px; border: 2px solid #ccc; border-radius: 8px; font-size: 24px; font-weight: bold; box-sizing: border-box; }
+    .input-group select option { font-size: 24px; font-weight: bold; }
     
     .btn-row { display: flex; justify-content: space-between; margin-top: 25px; }
     .btn { padding: 15px 15px; border: none; border-radius: 8px; font-size: 20px; cursor: pointer; font-weight: bold; }
@@ -118,25 +103,14 @@
       background-color: #fff;
     }
     
-    .pdf-excel-map { 
-        width: calc(100% - 4px); 
-        margin: 2px; 
-        border-collapse: collapse; 
-        text-align: center; 
-        table-layout: fixed; 
-    }
-    .pdf-excel-map td { 
-      border: 1.5px solid #000; 
-      height: 27px; 
-      overflow: hidden; 
-      white-space: nowrap; 
-      word-break: break-all;
-    }
+    .pdf-excel-map { width: calc(100% - 4px); margin: 2px; border-collapse: collapse; text-align: center; table-layout: fixed; }
+    .pdf-excel-map td { border: 1.5px solid #000; height: 27px; overflow: hidden; white-space: nowrap; word-break: break-all; }
     .pdf-m-id { font-weight: bold; font-size: 15px; background-color: #fff !important; }
     .pdf-m-name { font-weight: bold; font-size: 15px; }
     .pdf-m-text { font-size: 10.5px; font-weight: bold; letter-spacing: -0.5px; }
     .pdf-right-map td { border: 1.5px solid #000; }
 
+    /* 🌟 新版十字裁切線收據樣式 🌟 */
     .pdf-page-receipts {
       width: 200mm; 
       height: 287mm; 
@@ -147,12 +121,14 @@
       page-break-after: always;
       background-color: #fff;
     }
-    .pdf-receipt-card { position: relative; box-sizing: border-box; padding: 20mm; }
-    .pdf-receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
-    .pdf-receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
-    .pdf-receipt-card:nth-child(3) { border-right: 1px dashed #999; }
+    .pdf-receipt-card { position: relative; box-sizing: border-box; padding: 25mm 20mm; }
+    /* 精準的裁切十字虛線：僅加在特定邊緣，形成完美的正中央十字 */
+    .pdf-receipt-card:nth-child(1) { border-right: 1px dashed #666; border-bottom: 1px dashed #666; }
+    .pdf-receipt-card:nth-child(2) { border-bottom: 1px dashed #666; }
+    .pdf-receipt-card:nth-child(3) { border-right: 1px dashed #666; }
+    
     .pdf-receipt-inner { width: 100%; height: 100%; display: flex; flex-direction: row; justify-content: space-between; writing-mode: vertical-rl; text-orientation: upright; }
-    .pdf-r-line { display: flex; flex-direction: row; justify-content: space-between; align-items: center; font-size: 18px; height: 100%; }
+    .pdf-r-line { display: flex; flex-direction: row; align-items: center; height: 100%; }
 
     #print-area { display: none; }
     @media print {
@@ -164,7 +140,6 @@
       @page portrait_page { size: A4 portrait; margin: 5mm; }
 
       .page-map { page: landscape_page; position: relative; width: 100%; height: 200mm; max-height: 200mm; overflow: hidden; box-sizing: border-box; }
-      
       .excel-map { width: calc(100% - 4px); margin: 2px; border-collapse: collapse; text-align: center; table-layout: fixed; }
       .excel-map td { border: 1.5px solid #000; height: 27px; overflow: hidden; white-space: nowrap; word-break: break-all; }
       .m-id { font-weight: bold; font-size: 15px; background-color: #fff !important; -webkit-print-color-adjust: exact; }
@@ -172,13 +147,14 @@
       .m-text { font-size: 10.5px; font-weight: bold; letter-spacing: -0.5px; }
       .right-map td { border: 1.5px solid #000; }
       
+      /* 🌟 實體列印的十字裁切線收據樣式 🌟 */
       .page-receipts { page: portrait_page; page-break-after: always; width: 200mm; height: 287mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; box-sizing: border-box; }
-      .receipt-card { position: relative; box-sizing: border-box; padding: 20mm; }
-      .receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
-      .receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
-      .receipt-card:nth-child(3) { border-right: 1px dashed #999; }
+      .receipt-card { position: relative; box-sizing: border-box; padding: 25mm 20mm; }
+      .receipt-card:nth-child(1) { border-right: 1px dashed #666; border-bottom: 1px dashed #666; }
+      .receipt-card:nth-child(2) { border-bottom: 1px dashed #666; }
+      .receipt-card:nth-child(3) { border-right: 1px dashed #666; }
       .receipt-inner { width: 100%; height: 100%; display: flex; flex-direction: row; justify-content: space-between; writing-mode: vertical-rl; text-orientation: upright; font-family: Arial, "DFKai-sb", "標楷體", serif; }
-      .r-line { display: flex; flex-direction: row; justify-content: space-between; align-items: center; font-size: 18px; height: 100%; }
+      .r-line { display: flex; flex-direction: row; align-items: center; height: 100%; }
     }
   </style>
 </head>
@@ -498,6 +474,9 @@
         });
     }
 
+    // =========================================
+    // 🖨️ 匯出 PDF：十字裁切線完美復刻版收據
+    // =========================================
     function downloadReceiptsPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         
@@ -523,34 +502,39 @@
                     let amt = space.Amount || '';
                     let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
                     
+                    // 🌟 100% 復刻排版：利用 FlexBox 在垂直排版中實現精準對齊 🌟
                     receiptsHtml += `
                     <div class="pdf-receipt-card">
                       <div class="pdf-receipt-inner">
-                        <div class="pdf-r-line" style="font-size: 22px; font-weight: bold; letter-spacing: 2px;">
+                        <div class="pdf-r-line" style="font-size: 26px; font-weight: bold; letter-spacing: 10px; justify-content: center;">
                           <span>茲收到</span>
-                          <span style="font-size: 26px;">${name}</span>
-                          <span>君</span>
                         </div>
-                        <div class="pdf-r-line" style="font-size: 18px; letter-spacing: 1px;">
-                          <span>承租本殿停車場</span>
-                          <span style="font-size: 26px; font-weight: bold; font-family: Arial, sans-serif;">${space.SpaceID}</span>
+                        <div class="pdf-r-line" style="font-size: 18px; letter-spacing: 2px; justify-content: flex-start; padding-top: 10px;">
+                          <span style="font-size: 32px; font-weight: bold; margin-bottom: 10px;">${name}</span>
+                          <span>君承租本殿停車場</span>
+                        </div>
+                        <div class="pdf-r-line" style="justify-content: center; align-items: center;">
+                          <span style="font-size: 65px; font-weight: bold; font-family: Arial, sans-serif;">${space.SpaceID}</span>
+                        </div>
+                        <div class="pdf-r-line" style="font-size: 18px; letter-spacing: 2px; justify-content: flex-start;">
                           <span>號車位之清潔費</span>
                         </div>
-                        <div class="pdf-r-line" style="font-size: 18px; letter-spacing: 1px;">
+                        <div class="pdf-r-line" style="font-size: 18px; letter-spacing: 2px; justify-content: center;">
                           <span>新台幣</span>
-                          <span style="font-size: 22px; font-weight: bold; letter-spacing: 3px;">${displayAmt}</span>
+                          <span style="font-size: 26px; font-weight: bold; letter-spacing: 4px; margin: 15px 0;">${displayAmt}</span>
                           <span>元整</span>
                         </div>
-                        <div class="pdf-r-line" style="font-size: 22px; font-weight: bold; letter-spacing: 3px;">
-                          <span>珠靈殿管理委員會</span>
-                          <span>此據</span>
+                        <div class="pdf-r-line" style="font-size: 20px; font-weight: bold; letter-spacing: 5px; justify-content: space-between;">
+                          <span style="margin-top: 20px;">珠靈殿管理委員會</span>
+                          <span style="margin-bottom: 20px;">此據</span>
                         </div>
-                        <div class="pdf-r-line" style="font-size: 16px; letter-spacing: 1px;">
-                          <span>中華民國</span>
-                          <span style="font-weight: bold; font-size: 18px; font-family: Arial, sans-serif;">115</span>
+                        <div class="pdf-r-line" style="font-size: 16px; letter-spacing: 2px; justify-content: flex-start;">
+                          <span style="margin-top: 10px;">中華民國</span>
+                          <span style="font-weight: bold; font-size: 20px; font-family: Arial, sans-serif; margin: 5px 0;">${currentYear}</span>
                           <span>年</span>
-                          <span style="font-weight: bold; font-size: 18px; font-family: Arial, sans-serif;">${currentMonth}~${currentMonth+1}</span>
+                          <span style="font-weight: bold; font-size: 20px; font-family: Arial, sans-serif; margin: 5px 0;">${currentMonth}~${currentMonth+1}</span>
                           <span>月份</span>
+                          <span style="margin-top: auto; margin-bottom: 10px;">日</span>
                         </div>
                       </div>
                     </div>`;
@@ -581,6 +565,71 @@
             document.getElementById('status-msg').style.display = 'none';
             container.innerHTML = '';
         });
+    }
+
+    function printReceipts() {
+        if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
+        
+        let printDiv = document.getElementById('print-area');
+        
+        let receiptsHtml = '';
+        let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
+        
+        for (let i = 0; i < validSpaces.length; i += 4) {
+            let group = validSpaces.slice(i, i + 4);
+            receiptsHtml += `<div class="page-receipts">`;
+            
+            for (let j = 0; j < 4; j++) {
+                if (j < group.length) {
+                    let space = group[j];
+                    let name = space.Name || '';
+                    let amt = space.Amount || '';
+                    let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
+                    
+                    receiptsHtml += `
+                    <div class="receipt-card">
+                      <div class="receipt-inner">
+                        <div class="r-line" style="font-size: 26px; font-weight: bold; letter-spacing: 10px; justify-content: center;">
+                          <span>茲收到</span>
+                        </div>
+                        <div class="r-line" style="font-size: 18px; letter-spacing: 2px; justify-content: flex-start; padding-top: 10px;">
+                          <span style="font-size: 32px; font-weight: bold; margin-bottom: 10px;">${name}</span>
+                          <span>君承租本殿停車場</span>
+                        </div>
+                        <div class="r-line" style="justify-content: center; align-items: center;">
+                          <span style="font-size: 65px; font-weight: bold; font-family: Arial, sans-serif;">${space.SpaceID}</span>
+                        </div>
+                        <div class="r-line" style="font-size: 18px; letter-spacing: 2px; justify-content: flex-start;">
+                          <span>號車位之清潔費</span>
+                        </div>
+                        <div class="r-line" style="font-size: 18px; letter-spacing: 2px; justify-content: center;">
+                          <span>新台幣</span>
+                          <span style="font-size: 26px; font-weight: bold; letter-spacing: 4px; margin: 15px 0;">${displayAmt}</span>
+                          <span>元整</span>
+                        </div>
+                        <div class="r-line" style="font-size: 20px; font-weight: bold; letter-spacing: 5px; justify-content: space-between;">
+                          <span style="margin-top: 20px;">珠靈殿管理委員會</span>
+                          <span style="margin-bottom: 20px;">此據</span>
+                        </div>
+                        <div class="r-line" style="font-size: 16px; letter-spacing: 2px; justify-content: flex-start;">
+                          <span style="margin-top: 10px;">中華民國</span>
+                          <span style="font-weight: bold; font-size: 20px; font-family: Arial, sans-serif; margin: 5px 0;">${currentYear}</span>
+                          <span>年</span>
+                          <span style="font-weight: bold; font-size: 20px; font-family: Arial, sans-serif; margin: 5px 0;">${currentMonth}~${currentMonth+1}</span>
+                          <span>月份</span>
+                          <span style="margin-top: auto; margin-bottom: 10px;">日</span>
+                        </div>
+                      </div>
+                    </div>`;
+                } else {
+                    receiptsHtml += `<div class="receipt-card"></div>`; 
+                }
+            }
+            receiptsHtml += `</div>`;
+        }
+        
+        printDiv.innerHTML = receiptsHtml;
+        setTimeout(() => { window.print(); }, 100);
     }
 
     function openModal(space) {
