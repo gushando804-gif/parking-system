@@ -37,15 +37,19 @@
     .status-unpaid { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } 
     .status-paid { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
     
-    .space-layout { display: flex; height: 100%; min-height: 90px; }
+    /* 🌟 改為 3 列結構，高度微調增加 🌟 */
+    .space-layout { display: flex; height: 100%; min-height: 110px; }
     .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
-    .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 6px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
-    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 6px; font-size: 21px; letter-spacing: 0px; flex: 1; white-space: nowrap; overflow: hidden; }
+    
+    .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 4px 6px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
+    .space-row-middle { display: flex; justify-content: center; align-items: center; padding: 4px 6px; font-size: 21px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
+    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 4px 6px; font-size: 21px; flex: 1; white-space: nowrap; overflow: hidden; }
     
     .info-name { font-size: 26px; font-weight: bold; }
     .info-plate { font-size: 26px; opacity: 0.8; margin-left: 26px; text-overflow: ellipsis; }
-    .badge-amount { margin-left: 8px; font-weight: bold; font-size: 20px; }
+    .badge-amount { font-weight: bold; font-size: 20px; }
+    .badge-time { margin-left: 8px; font-size: 16px; color: #555; }
     .badge-note { margin-left: 8px; font-size: 20px; }
     
     .phone-link { color: inherit; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 4px; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -53,15 +57,17 @@
 
     @media (min-width: 768px) {
       .grid-container { grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 15px; }
-      .space-layout { min-height: 75px; }
+      .space-layout { min-height: 95px; }
       .space-id { font-size: 26px; border-right: 1px solid rgba(0,0,0,0.15); }
-      .info-name { font-size: 26px; }
-      .info-plate { font-size: 26px; margin-left: 6px; }
-      .space-row-bottom { font-size: 16px; letter-spacing: 0px; }
-      .space-row-top { border-bottom: 1px solid rgba(0,0,0,0.15); padding: 4px; }
+      .info-name { font-size: 24px; }
+      .info-plate { font-size: 24px; margin-left: 6px; }
+      .space-row-middle { font-size: 16px; padding: 3px; border-bottom: 1px solid rgba(0,0,0,0.15); }
+      .space-row-bottom { font-size: 16px; padding: 3px; }
+      .space-row-top { border-bottom: 1px solid rgba(0,0,0,0.15); padding: 3px; }
       .parking-space { border-width: 1px; border-radius: 8px; }
       .badge-note { font-size: 16px; }
       .badge-amount { font-size: 16px; }
+      .badge-time { font-size: 14px; }
     }
 
     .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow-y: auto; }
@@ -76,55 +82,16 @@
     .btn-leave { background-color: #dc3545; color: white; display: none; }
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
-    /* =========================================
-       🌟 純背景 PDF 生成專用結界 🌟
-       ========================================= */
-    #pdf-export-area {
-      position: absolute; 
-      left: -9999px; 
-      top: 0;
-      background: #fff; color: #000;
-      font-family: Arial, "DFKai-sb", "BiauKai", "STKaiti", "標楷體", serif; 
-    }
-
-    .pdf-page-map {
-      position: relative;
-      width: 287mm; 
-      height: 195mm; 
-      box-sizing: border-box;
-      background-color: #fff;
-    }
-    
-    /* 🌟 修復 1 號車位右框線被裁切的魔法：往內縮 4px，留出 2px 的安全距離 🌟 */
-    .pdf-excel-map { 
-        width: calc(100% - 4px); 
-        margin: 2px; 
-        border-collapse: collapse; 
-        text-align: center; 
-        table-layout: fixed; 
-    }
-    .pdf-excel-map td { 
-      border: 1.5px solid #000; 
-      height: 27px; 
-      overflow: hidden; 
-      white-space: nowrap; 
-      word-break: break-all;
-    }
+    /* PDF 結界樣式保留不變 */
+    #pdf-export-area { position: absolute; left: -9999px; top: 0; background: #fff; color: #000; font-family: Arial, "DFKai-sb", "BiauKai", "STKaiti", "標楷體", serif; }
+    .pdf-page-map { position: relative; width: 287mm; height: 195mm; box-sizing: border-box; background-color: #fff; }
+    .pdf-excel-map { width: calc(100% - 4px); margin: 2px; border-collapse: collapse; text-align: center; table-layout: fixed; }
+    .pdf-excel-map td { border: 1.5px solid #000; height: 27px; overflow: hidden; white-space: nowrap; word-break: break-all; }
     .pdf-m-id { font-weight: bold; font-size: 15px; background-color: #fff !important; }
     .pdf-m-name { font-weight: bold; font-size: 15px; }
     .pdf-m-text { font-size: 10.5px; font-weight: bold; letter-spacing: -0.5px; }
     .pdf-right-map td { border: 1.5px solid #000; }
-
-    .pdf-page-receipts {
-      width: 200mm; 
-      height: 287mm; 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      grid-template-rows: 1fr 1fr; 
-      box-sizing: border-box;
-      page-break-after: always;
-      background-color: #fff;
-    }
+    .pdf-page-receipts { width: 200mm; height: 287mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; box-sizing: border-box; page-break-after: always; background-color: #fff; }
     .pdf-receipt-card { position: relative; box-sizing: border-box; padding: 20mm; }
     .pdf-receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
     .pdf-receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
@@ -142,8 +109,6 @@
       @page portrait_page { size: A4 portrait; margin: 5mm; }
 
       .page-map { page: landscape_page; position: relative; width: 100%; height: 200mm; max-height: 200mm; overflow: hidden; box-sizing: border-box; }
-      
-      /* 同步修復直接列印的邊框 */
       .excel-map { width: calc(100% - 4px); margin: 2px; border-collapse: collapse; text-align: center; table-layout: fixed; }
       .excel-map td { border: 1.5px solid #000; height: 27px; overflow: hidden; white-space: nowrap; word-break: break-all; }
       .m-id { font-weight: bold; font-size: 15px; background-color: #fff !important; -webkit-print-color-adjust: exact; }
@@ -204,9 +169,14 @@
           <label>繳費金額：</label>
           <div style="display: flex; gap: 10px;">
             <input type="text" id="modal-amount" placeholder="留空代表未繳費" style="flex: 1;">
-            <button type="button" onclick="document.getElementById('modal-amount').value='3600'" style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; white-space: nowrap;">💰 3600</button>
+            <button type="button" onclick="fillAmountAndTime()" style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; white-space: nowrap;">💰 3600</button>
           </div>
         </div>
+        <div class="input-group">
+          <label>繳費時間：</label>
+          <input type="text" id="modal-paymentTime" placeholder="例如: 2026/05/31 15:30 (可留空)">
+        </div>
+
         <div class="input-group">
           <label>備註 (選填)：</label>
           <input type="text" id="modal-note" placeholder="例如: 5/15起租，單日計算">
@@ -252,6 +222,15 @@
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
 
     function isLineBrowser() { return /Line/i.test(navigator.userAgent); }
+
+    // 🌟 自動填入金額與當下時間的函數 🌟
+    function fillAmountAndTime() {
+        document.getElementById('modal-amount').value = '3600';
+        let now = new Date();
+        let pad = (num) => String(num).padStart(2, '0');
+        let timeStr = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        document.getElementById('modal-paymentTime').value = timeStr;
+    }
 
     async function initAuth() {
       try {
@@ -324,12 +303,26 @@
         } else {
           var isPaid = space.Amount && space.Amount.toString().trim() !== "";
           if (isPaid) { div.classList.add('status-paid'); } else { div.classList.add('status-unpaid'); }
+          
           var displayName = space.Name ? space.Name : "未填寫";
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
           var displayPhone = space.Phone ? `<a href="tel:${space.Phone}" class="phone-link" onclick="event.stopPropagation();">${space.Phone}</a>` : "無電話";
           var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
           var displayNote = space.Note ? `<span class="badge-note" title="${space.Note}">📝</span>` : "";
-          div.innerHTML = `<div class="space-layout"><div class="space-id">${space.SpaceID}</div><div class="space-info"><div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div><div class="space-row-bottom">${displayPhone}${displayAmount}${displayNote}</div></div></div>`;
+          
+          // 🌟 若已繳費且有傳回付款時間，才印出時間 🌟
+          var displayTime = (isPaid && space.PaymentTime) ? `<span class="badge-time">🕒 ${space.PaymentTime}</span>` : "";
+
+          // 🌟 改為三列結構：Top(姓名/車牌)、Middle(電話/備註)、Bottom(金額/時間) 🌟
+          div.innerHTML = `
+            <div class="space-layout">
+              <div class="space-id">${space.SpaceID}</div>
+              <div class="space-info">
+                <div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div>
+                <div class="space-row-middle">${displayPhone}${displayNote}</div>
+                <div class="space-row-bottom">${displayAmount}${displayTime}</div>
+              </div>
+            </div>`;
         }
         div.onclick = function() { openModal(space); };
         grid.appendChild(div);
@@ -361,7 +354,7 @@
     }
 
     // =========================================
-    // 🖨️ 匯出 PDF：無敵畫布總表 (電腦版右框線修復)
+    // 🖨️ 匯出 PDF：無敵畫布總表
     // =========================================
     function downloadMapPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
@@ -391,8 +384,7 @@
                       民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        // 🌟 核心修復：width 改回 100%，依賴 CSS 裡的 margin: 2px 來縮邊 🌟
-        mapHtml += `<div style="position:absolute; top:16%; left:0; width:100%;">`;
+        mapHtml += `<div style="position:absolute; top:16%; left:0.5%; width:99%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -401,8 +393,7 @@
         mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        // 🌟 左下區塊同步設定 76.923% 🌟
-        mapHtml += `<div style="position:absolute; top:52%; left:0; width:76.923%;">`;
+        mapHtml += `<div style="position:absolute; top:52%; left:0.5%; width:76.15%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -493,7 +484,7 @@
                       民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        mapHtml += `<div style="position:absolute; top:16%; left:0; width:100%;">`;
+        mapHtml += `<div style="position:absolute; top:16%; left:0.5%; width:99%;">`;
         mapHtml += `<table class="excel-map">`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -502,7 +493,7 @@
         mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        mapHtml += `<div style="position:absolute; top:52%; left:0; width:76.923%;">`;
+        mapHtml += `<div style="position:absolute; top:52%; left:0.5%; width:76.15%;">`;
         mapHtml += `<table class="excel-map">`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -722,12 +713,14 @@
       select.innerHTML += '<option value="NEW">➕ 新增客戶 (手動輸入)</option>';
       customName.style.display = 'none';
 
+      // 🌟 打開視窗時自動帶入付款時間 (若有) 🌟
       if (space.Status === "空位" || space.Status === "") {
         document.getElementById('btn-leave').style.display = 'none';
         document.getElementById('btn-save').innerText = '確定出租';
         select.value = ""; phoneInput.value = ""; plateInput.value = "";
         document.getElementById('modal-amount').value = "3600";
         document.getElementById('modal-note').value = "";
+        document.getElementById('modal-paymentTime').value = "";
       } else {
         document.getElementById('btn-leave').style.display = 'inline-block';
         document.getElementById('btn-save').innerText = '儲存修改';
@@ -739,6 +732,7 @@
         phoneInput.value = space.Phone || ""; plateInput.value = space.LicensePlate || "";
         document.getElementById('modal-amount').value = space.Amount || "";
         document.getElementById('modal-note').value = space.Note || "";
+        document.getElementById('modal-paymentTime').value = space.PaymentTime || "";
       }
       document.getElementById('editModal').style.display = 'block';
     }
@@ -759,6 +753,7 @@
 
     function closeModal() { document.getElementById('editModal').style.display = 'none'; }
 
+    // 🌟 儲存時將 PaymentTime 也送給 GAS 後端 🌟
     function saveData() {
       var spaceId = document.getElementById('modal-spaceId').value;
       var name = document.getElementById('modal-name-select').value;
@@ -767,22 +762,25 @@
       var plate = document.getElementById('modal-plate').value;
       var amount = document.getElementById('modal-amount').value.trim();
       var note = document.getElementById('modal-note').value.trim();
+      var paymentTime = document.getElementById('modal-paymentTime').value.trim();
+      
       if (!name) { alert("請選擇或輸入姓名！"); return; }
       closeModal();
-      sendUpdateRequest(spaceId, 'update', name, phone, plate, amount, note);
+      sendUpdateRequest(spaceId, 'update', name, phone, plate, amount, note, paymentTime);
     }
 
     function leaveSpace() {
       var spaceId = document.getElementById('modal-spaceId').value;
       if(confirm(`確定要將 ${spaceId} 號車位退租，並清空客戶資料嗎？`)) {
-        closeModal(); sendUpdateRequest(spaceId, 'leave', '', '', '', '', '');
+        closeModal(); sendUpdateRequest(spaceId, 'leave', '', '', '', '', '', '');
       }
     }
 
-    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '') {
+    // 🌟 API Payload 增加 paymentTime 參數 🌟
+    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '', paymentTime = '') {
       document.getElementById('status-msg').style.display = 'block';
       document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
-      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, period: getPeriodString(), uid: globalUserId };
+      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, paymentTime: paymentTime, period: getPeriodString(), uid: globalUserId };
       try {
         const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
         const result = await response.json();
