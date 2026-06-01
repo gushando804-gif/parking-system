@@ -37,7 +37,6 @@
     .status-unpaid { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } 
     .status-paid { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
     
-    /* 🌟 改為 3 列結構，高度微調增加 🌟 */
     .space-layout { display: flex; height: 100%; min-height: 110px; }
     .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
@@ -74,24 +73,66 @@
     .modal-content { background-color: #fff; margin: 10% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .modal-content h3 { margin-top: 0; text-align: center; color: #333; font-size: 24px; }
     .input-group { margin-bottom: 18px; }
-    .input-group label { display: block; font-size: 18px; margin-bottom: 8px; font-weight: bold;}
-    .input-group select, .input-group input { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 18px; box-sizing: border-box; }
+    
+    /* 🌟 字體全面放大：標題 20px，輸入框/選單 22px 🌟 */
+    .input-group label { display: block; font-size: 20px; margin-bottom: 8px; font-weight: bold;}
+    .input-group select, .input-group input { width: 100%; padding: 14px; border: 2px solid #ccc; border-radius: 8px; font-size: 22px; box-sizing: border-box; }
+    
     .btn-row { display: flex; justify-content: space-between; margin-top: 25px; }
-    .btn { padding: 15px 15px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; }
+    /* 🌟 按鈕統一放大到 20px 🌟 */
+    .btn { padding: 15px 15px; border: none; border-radius: 8px; font-size: 20px; cursor: pointer; font-weight: bold; }
     .btn-save { background-color: #007bff; color: white; flex-grow: 1; margin-right: 10px; }
     .btn-leave { background-color: #dc3545; color: white; display: none; }
     .btn-cancel { background-color: #6c757d; color: white; margin-left: 10px; }
 
-    /* PDF 結界樣式保留不變 */
-    #pdf-export-area { position: absolute; left: -9999px; top: 0; background: #fff; color: #000; font-family: Arial, "DFKai-sb", "BiauKai", "STKaiti", "標楷體", serif; }
-    .pdf-page-map { position: relative; width: 287mm; height: 195mm; box-sizing: border-box; background-color: #fff; }
-    .pdf-excel-map { width: calc(100% - 4px); margin: 2px; border-collapse: collapse; text-align: center; table-layout: fixed; }
-    .pdf-excel-map td { border: 1.5px solid #000; height: 27px; overflow: hidden; white-space: nowrap; word-break: break-all; }
+    /* =========================================
+       🌟 純背景 PDF 生成專用結界 🌟
+       ========================================= */
+    #pdf-export-area {
+      position: absolute; 
+      left: -9999px; 
+      top: 0;
+      background: #fff; color: #000;
+      font-family: Arial, "DFKai-sb", "BiauKai", "STKaiti", "標楷體", serif; 
+    }
+
+    .pdf-page-map {
+      position: relative;
+      width: 287mm; 
+      height: 195mm; 
+      box-sizing: border-box;
+      background-color: #fff;
+    }
+    
+    .pdf-excel-map { 
+        width: calc(100% - 4px); 
+        margin: 2px; 
+        border-collapse: collapse; 
+        text-align: center; 
+        table-layout: fixed; 
+    }
+    .pdf-excel-map td { 
+      border: 1.5px solid #000; 
+      height: 27px; 
+      overflow: hidden; 
+      white-space: nowrap; 
+      word-break: break-all;
+    }
     .pdf-m-id { font-weight: bold; font-size: 15px; background-color: #fff !important; }
     .pdf-m-name { font-weight: bold; font-size: 15px; }
     .pdf-m-text { font-size: 10.5px; font-weight: bold; letter-spacing: -0.5px; }
     .pdf-right-map td { border: 1.5px solid #000; }
-    .pdf-page-receipts { width: 200mm; height: 287mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; box-sizing: border-box; page-break-after: always; background-color: #fff; }
+
+    .pdf-page-receipts {
+      width: 200mm; 
+      height: 287mm; 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      grid-template-rows: 1fr 1fr; 
+      box-sizing: border-box;
+      page-break-after: always;
+      background-color: #fff;
+    }
     .pdf-receipt-card { position: relative; box-sizing: border-box; padding: 20mm; }
     .pdf-receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
     .pdf-receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
@@ -109,6 +150,7 @@
       @page portrait_page { size: A4 portrait; margin: 5mm; }
 
       .page-map { page: landscape_page; position: relative; width: 100%; height: 200mm; max-height: 200mm; overflow: hidden; box-sizing: border-box; }
+      
       .excel-map { width: calc(100% - 4px); margin: 2px; border-collapse: collapse; text-align: center; table-layout: fixed; }
       .excel-map td { border: 1.5px solid #000; height: 27px; overflow: hidden; white-space: nowrap; word-break: break-all; }
       .m-id { font-weight: bold; font-size: 15px; background-color: #fff !important; -webkit-print-color-adjust: exact; }
@@ -169,7 +211,7 @@
           <label>繳費金額：</label>
           <div style="display: flex; gap: 10px;">
             <input type="text" id="modal-amount" placeholder="留空代表未繳費" style="flex: 1;">
-            <button type="button" onclick="fillAmountAndTime()" style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; white-space: nowrap;">💰 3600</button>
+            <button type="button" onclick="fillAmountAndTime()" style="padding: 0 15px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 22px; font-weight: bold; white-space: nowrap;">💰 3600</button>
           </div>
         </div>
         <div class="input-group">
@@ -185,7 +227,7 @@
         <div class="btn-row">
           <button class="btn btn-save" id="btn-save" onclick="saveData()">儲存</button>
           <button class="btn btn-leave" id="btn-leave" onclick="leaveSpace()">退租</button>
-          <button class="btn-cancel" onclick="closeModal()">取消</button>
+          <button class="btn btn-cancel" onclick="closeModal()">取消</button>
         </div>
       </div>
     </div>
@@ -223,7 +265,6 @@
 
     function isLineBrowser() { return /Line/i.test(navigator.userAgent); }
 
-    // 🌟 自動填入金額與當下時間的函數 🌟
     function fillAmountAndTime() {
         document.getElementById('modal-amount').value = '3600';
         let now = new Date();
@@ -309,11 +350,8 @@
           var displayPhone = space.Phone ? `<a href="tel:${space.Phone}" class="phone-link" onclick="event.stopPropagation();">${space.Phone}</a>` : "無電話";
           var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
           var displayNote = space.Note ? `<span class="badge-note" title="${space.Note}">📝</span>` : "";
-          
-          // 🌟 若已繳費且有傳回付款時間，才印出時間 🌟
           var displayTime = (isPaid && space.PaymentTime) ? `<span class="badge-time">🕒 ${space.PaymentTime}</span>` : "";
 
-          // 🌟 改為三列結構：Top(姓名/車牌)、Middle(電話/備註)、Bottom(金額/時間) 🌟
           div.innerHTML = `
             <div class="space-layout">
               <div class="space-id">${space.SpaceID}</div>
@@ -344,18 +382,6 @@
         return res.replace(/零$/, '');
     }
 
-    function setPrintOrientation(orientation) {
-        let oldStyle = document.getElementById('dynamic-print-style');
-        if (oldStyle) oldStyle.remove();
-        let style = document.createElement('style');
-        style.id = 'dynamic-print-style';
-        style.innerHTML = `@media print { @page { size: A4 ${orientation}; margin: 5mm; } }`;
-        document.head.appendChild(style);
-    }
-
-    // =========================================
-    // 🖨️ 匯出 PDF：無敵畫布總表
-    // =========================================
     function downloadMapPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         
@@ -384,7 +410,7 @@
                       民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        mapHtml += `<div style="position:absolute; top:16%; left:0.5%; width:99%;">`;
+        mapHtml += `<div style="position:absolute; top:16%; left:0; width:100%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -393,7 +419,7 @@
         mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        mapHtml += `<div style="position:absolute; top:52%; left:0.5%; width:76.15%;">`;
+        mapHtml += `<div style="position:absolute; top:52%; left:0; width:76.923%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -458,96 +484,6 @@
         });
     }
 
-    // =========================================
-    // 🖨️ 備用：舊版直印
-    // =========================================
-    function printMap() {
-        if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
-        
-        setPrintOrientation('landscape'); 
-        let printDiv = document.getElementById('print-area');
-        
-        function getSpace(id) {
-            let s = globalSpaces.find(x => x.SpaceID == id);
-            if(!s || !s.Name) return { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;' };
-            return { id: s.SpaceID, name: s.Name, plate: s.LicensePlate || '&nbsp;', phone: s.Phone || '&nbsp;' };
-        }
-
-        const topIds = ['15','13','12','11','10','9','8','7','6','5','3','2','1'];
-        const botIdsRow1 = ['16','17','18','19','20','21','22','23','25','26'];
-        const botIdsRow2 = ['37','36','35','33','32','31','30','29','28','27'];
-        const rightIds = ['39-2', '39-1', '39', '38'];
-
-        let mapHtml = `<div class="page-map">`;
-        
-        mapHtml += `<div style="position:absolute; top:2%; width:100%; text-align:center; font-size:36px; font-weight:bold; letter-spacing:6px; font-family:'標楷體', serif;">
-                      民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
-                    </div>`;
-
-        mapHtml += `<div style="position:absolute; top:16%; left:0.5%; width:99%;">`;
-        mapHtml += `<table class="excel-map">`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
-        mapHtml += `</table></div>`;
-
-        mapHtml += `<div style="position:absolute; top:52%; left:0.5%; width:76.15%;">`;
-        mapHtml += `<table class="excel-map">`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
-        
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
-        mapHtml += `</table></div>`;
-
-        mapHtml += `<div style="position:absolute; top:52%; right:15px; width:14%;">`;
-        mapHtml += `<table class="excel-map right-map">`;
-        rightIds.forEach(id => {
-            let s = getSpace(id);
-            mapHtml += `<tr>
-                <td style="width:65%; text-align:center; padding:2px;">
-                    <div class="m-name" style="margin-bottom:2px;">${s.name}</div>
-                    <div class="m-text">${s.plate}</div>
-                    <div class="m-text">${s.phone}</div>
-                </td>
-                <td class="m-id" style="width:35%; vertical-align:middle; font-size:16px; letter-spacing:-0.5px;">${id}</td>
-            </tr>`;
-        });
-        mapHtml += `</table></div>`;
-
-        mapHtml += `<div style="position:absolute; bottom:2%; left:78%; width:8%; text-align:center;">
-            <svg width="55" height="35" viewBox="0 0 80 50">
-                <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
-                <text x="40" y="40" font-size="18" text-anchor="middle" font-weight="bold" font-family="標楷體">入口</text>
-            </svg>
-        </div>`;
-
-        mapHtml += `<div style="position:absolute; bottom:-15px; right:5px; width:12%; text-align:center;">
-            <svg width="60" height="80" viewBox="0 0 100 120">
-                <rect x="42" y="90" width="16" height="30" fill="#5c4033" stroke="black" stroke-width="1.5"/>
-                <polygon points="50,0 10,40 90,40" fill="#228B22" stroke="black" stroke-width="1.5"/>
-                <polygon points="50,25 0,70 100,70" fill="#228B22" stroke="black" stroke-width="1.5"/>
-                <polygon points="50,50 -10,100 110,100" fill="#228B22" stroke="black" stroke-width="1.5"/>
-            </svg>
-        </div>`;
-
-        mapHtml += `</div>`; 
-        
-        printDiv.innerHTML = mapHtml;
-        setTimeout(() => { window.print(); }, 100);
-    }
-
-    // =========================================
-    // 🖨️ 匯出 PDF：收據
-    // =========================================
     function downloadReceiptsPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         
@@ -633,68 +569,6 @@
         });
     }
 
-    function printReceipts() {
-        if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
-        
-        setPrintOrientation('portrait'); 
-        let printDiv = document.getElementById('print-area');
-        
-        let receiptsHtml = '';
-        let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
-        
-        for (let i = 0; i < validSpaces.length; i += 4) {
-            let group = validSpaces.slice(i, i + 4);
-            receiptsHtml += `<div class="page-receipts">`;
-            
-            for (let j = 0; j < 4; j++) {
-                if (j < group.length) {
-                    let space = group[j];
-                    let name = space.Name || '';
-                    let amt = space.Amount || '';
-                    let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '________');
-                    
-                    receiptsHtml += `
-                    <div class="receipt-card">
-                      <div class="receipt-inner">
-                        <div class="r-line" style="font-size: 22px; font-weight: bold; letter-spacing: 2px;">
-                          <span>茲收到</span>
-                          <span style="font-size: 26px; font-family: 'Microsoft JhengHei', sans-serif;">${name}</span>
-                          <span>君</span>
-                        </div>
-                        <div class="r-line" style="font-size: 18px; letter-spacing: 1px;">
-                          <span>承租本殿停車場</span>
-                          <span style="font-size: 26px; font-weight: bold; font-family: 'Microsoft JhengHei', sans-serif;">${space.SpaceID}</span>
-                          <span>號車位之清潔費</span>
-                        </div>
-                        <div class="r-line" style="font-size: 18px; letter-spacing: 1px;">
-                          <span>新台幣</span>
-                          <span style="font-size: 22px; font-weight: bold; font-family: 'Microsoft JhengHei', sans-serif; letter-spacing: 3px;">${displayAmt}</span>
-                          <span>元整</span>
-                        </div>
-                        <div class="r-line" style="font-size: 22px; font-weight: bold; letter-spacing: 3px;">
-                          <span>珠靈殿管理委員會</span>
-                          <span>此據</span>
-                        </div>
-                        <div class="r-line" style="font-size: 16px; font-family: 'Microsoft JhengHei', sans-serif; letter-spacing: 1px;">
-                          <span>中華民國</span>
-                          <span style="font-weight: bold; font-size: 18px;">115</span>
-                          <span>年</span>
-                          <span style="font-weight: bold; font-size: 18px;">${currentMonth}~${currentMonth+1}</span>
-                          <span>月份</span>
-                        </div>
-                      </div>
-                    </div>`;
-                } else {
-                    receiptsHtml += `<div class="receipt-card"></div>`; 
-                }
-            }
-            receiptsHtml += `</div>`;
-        }
-        
-        printDiv.innerHTML = receiptsHtml;
-        setTimeout(() => { window.print(); }, 100);
-    }
-
     function openModal(space) {
       document.getElementById('modal-spaceId').value = space.SpaceID;
       document.getElementById('modal-title').innerText = `管理車位：${space.SpaceID} 號`;
@@ -713,7 +587,6 @@
       select.innerHTML += '<option value="NEW">➕ 新增客戶 (手動輸入)</option>';
       customName.style.display = 'none';
 
-      // 🌟 打開視窗時自動帶入付款時間 (若有) 🌟
       if (space.Status === "空位" || space.Status === "") {
         document.getElementById('btn-leave').style.display = 'none';
         document.getElementById('btn-save').innerText = '確定出租';
@@ -753,7 +626,6 @@
 
     function closeModal() { document.getElementById('editModal').style.display = 'none'; }
 
-    // 🌟 儲存時將 PaymentTime 也送給 GAS 後端 🌟
     function saveData() {
       var spaceId = document.getElementById('modal-spaceId').value;
       var name = document.getElementById('modal-name-select').value;
@@ -776,7 +648,6 @@
       }
     }
 
-    // 🌟 API Payload 增加 paymentTime 參數 🌟
     async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '', paymentTime = '') {
       document.getElementById('status-msg').style.display = 'block';
       document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
