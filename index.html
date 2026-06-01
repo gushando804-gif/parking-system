@@ -94,7 +94,15 @@
       box-sizing: border-box;
       background-color: #fff;
     }
-    .pdf-excel-map { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
+    
+    /* 🌟 修復 1 號車位右框線被裁切的魔法：往內縮 4px，留出 2px 的安全距離 🌟 */
+    .pdf-excel-map { 
+        width: calc(100% - 4px); 
+        margin: 2px; 
+        border-collapse: collapse; 
+        text-align: center; 
+        table-layout: fixed; 
+    }
     .pdf-excel-map td { 
       border: 1.5px solid #000; 
       height: 27px; 
@@ -134,7 +142,9 @@
       @page portrait_page { size: A4 portrait; margin: 5mm; }
 
       .page-map { page: landscape_page; position: relative; width: 100%; height: 200mm; max-height: 200mm; overflow: hidden; box-sizing: border-box; }
-      .excel-map { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
+      
+      /* 同步修復直接列印的邊框 */
+      .excel-map { width: calc(100% - 4px); margin: 2px; border-collapse: collapse; text-align: center; table-layout: fixed; }
       .excel-map td { border: 1.5px solid #000; height: 27px; overflow: hidden; white-space: nowrap; word-break: break-all; }
       .m-id { font-weight: bold; font-size: 15px; background-color: #fff !important; -webkit-print-color-adjust: exact; }
       .m-name { font-weight: bold; font-size: 15px; }
@@ -381,8 +391,8 @@
                       民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        // 🌟 縮小總寬度到 99%，左右各留 0.5% 邊界，徹底解決電腦版裁切右邊框的問題 🌟
-        mapHtml += `<div style="position:absolute; top:16%; left:0.5%; width:99%;">`;
+        // 🌟 核心修復：width 改回 100%，依賴 CSS 裡的 margin: 2px 來縮邊 🌟
+        mapHtml += `<div style="position:absolute; top:16%; left:0; width:100%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -391,8 +401,8 @@
         mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        // 🌟 左下區塊同步調整：寬度為 99% 的 10/13，約等於 76.15%，保持上下完美對齊 🌟
-        mapHtml += `<div style="position:absolute; top:52%; left:0.5%; width:76.15%;">`;
+        // 🌟 左下區塊同步設定 76.923% 🌟
+        mapHtml += `<div style="position:absolute; top:52%; left:0; width:76.923%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -483,7 +493,7 @@
                       民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        mapHtml += `<div style="position:absolute; top:16%; left:0.5%; width:99%;">`;
+        mapHtml += `<div style="position:absolute; top:16%; left:0; width:100%;">`;
         mapHtml += `<table class="excel-map">`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
@@ -492,7 +502,7 @@
         mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        mapHtml += `<div style="position:absolute; top:52%; left:0.5%; width:76.15%;">`;
+        mapHtml += `<div style="position:absolute; top:52%; left:0; width:76.923%;">`;
         mapHtml += `<table class="excel-map">`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-id">${id}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
