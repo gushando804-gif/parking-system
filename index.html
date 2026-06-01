@@ -351,7 +351,7 @@
     }
 
     // =========================================
-    // 🖨️ 匯出 PDF：無敵畫布總表 (修復 1 號右框線)
+    // 🖨️ 匯出 PDF：無敵畫布總表
     // =========================================
     function downloadMapPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
@@ -381,7 +381,6 @@
                       民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">115</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
 
-        // 🌟 縮小到 99.5%，並向右推 1px，避免 1 號車位右側框線被畫布邊緣裁切 🌟
         mapHtml += `<div style="position:absolute; top:16%; left:1px; width:99.5%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
@@ -391,7 +390,6 @@
         mapHtml += `<tr>` + topIds.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`; 
         mapHtml += `</table></div>`;
 
-        // 左下區塊同步向右推 1px 保持對齊
         mapHtml += `<div style="position:absolute; top:52%; left:1px; width:76.92%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
@@ -407,17 +405,18 @@
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
         mapHtml += `</table></div>`;
 
-        mapHtml += `<div style="position:absolute; top:52%; right:15px; width:13%;">`;
+        // 🌟 39系列：加寬容器到 14%，欄位比例調整為 65% : 35%，字體微縮防截斷 🌟
+        mapHtml += `<div style="position:absolute; top:52%; right:15px; width:14%;">`;
         mapHtml += `<table class="pdf-excel-map pdf-right-map">`;
         rightIds.forEach(id => {
             let s = getSpace(id);
             mapHtml += `<tr>
-                <td style="width:70%; text-align:center; padding:4px;">
-                    <div class="pdf-m-name" style="margin-bottom:3px;">${s.name}</div>
+                <td style="width:65%; text-align:center; padding:2px;">
+                    <div class="pdf-m-name" style="margin-bottom:2px;">${s.name}</div>
                     <div class="pdf-m-text">${s.plate}</div>
                     <div class="pdf-m-text">${s.phone}</div>
                 </td>
-                <td class="pdf-m-id" style="width:30%; vertical-align:middle; font-size:18px;">${id}</td>
+                <td class="pdf-m-id" style="width:35%; vertical-align:middle; font-size:16px; letter-spacing:-0.5px;">${id}</td>
             </tr>`;
         });
         mapHtml += `</table></div>`;
@@ -507,22 +506,21 @@
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
         mapHtml += `</table></div>`;
 
-        mapHtml += `<div style="position:absolute; top:52%; right:15px; width:13%;">`;
+        mapHtml += `<div style="position:absolute; top:52%; right:15px; width:14%;">`;
         mapHtml += `<table class="excel-map right-map">`;
         rightIds.forEach(id => {
             let s = getSpace(id);
             mapHtml += `<tr>
-                <td style="width:70%; text-align:center; padding:4px;">
-                    <div class="m-name" style="margin-bottom:3px;">${s.name}</div>
+                <td style="width:65%; text-align:center; padding:2px;">
+                    <div class="m-name" style="margin-bottom:2px;">${s.name}</div>
                     <div class="m-text">${s.plate}</div>
                     <div class="m-text">${s.phone}</div>
                 </td>
-                <td class="m-id" style="width:30%; vertical-align:middle; font-size:18px;">${id}</td>
+                <td class="m-id" style="width:35%; vertical-align:middle; font-size:16px; letter-spacing:-0.5px;">${id}</td>
             </tr>`;
         });
         mapHtml += `</table></div>`;
 
-        // 入口
         mapHtml += `<div style="position:absolute; bottom:2%; left:78%; width:8%; text-align:center;">
             <svg width="55" height="35" viewBox="0 0 80 50">
                 <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
@@ -530,7 +528,6 @@
             </svg>
         </div>`;
 
-        // 大樹 
         mapHtml += `<div style="position:absolute; bottom:-15px; right:5px; width:12%; text-align:center;">
             <svg width="60" height="80" viewBox="0 0 100 120">
                 <rect x="42" y="90" width="16" height="30" fill="#5c4033" stroke="black" stroke-width="1.5"/>
