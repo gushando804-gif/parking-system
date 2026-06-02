@@ -99,7 +99,7 @@
     .pdf-m-text, .m-text { font-size: 11px; letter-spacing: -0.5px; font-family: Arial, sans-serif !important; }
     .pdf-right-map td, .right-map td { border: 1.5px solid #000; }
 
-    /* --- 🌟 終極鋼鐵絕對座標收據樣式 (196x284mm 極限防空白頁) 🌟 --- */
+    /* --- 🌟 終極鋼鐵絕對座標收據樣式 (196x284mm，去外框) 🌟 --- */
     .pdf-page-receipts, .page-receipts {
       width: 196mm; 
       height: 284mm; 
@@ -110,7 +110,7 @@
       box-sizing: border-box;
       page-break-after: always;
       background-color: #fff;
-      border: 1.5px solid #000; /* 外層粗黑框 */
+      border: none; /* 🌟 拔除外層黑框 🌟 */
       overflow: hidden;
       font-family: "BiauKai", "DFKai-sb", "標楷體", serif !important;
     }
@@ -123,10 +123,10 @@
       box-sizing: border-box; 
     }
     
-    /* 精準內線：形成完美十字 */
-    .pdf-receipt-card:nth-child(1), .receipt-card:nth-child(1) { border-right: 1px solid #000; border-bottom: 1px solid #000; }
-    .pdf-receipt-card:nth-child(2), .receipt-card:nth-child(2) { border-bottom: 1px solid #000; }
-    .pdf-receipt-card:nth-child(3), .receipt-card:nth-child(3) { border-right: 1px solid #000; }
+    /* 🌟 精準虛線：形成完美裁切十字 🌟 */
+    .pdf-receipt-card:nth-child(1), .receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
+    .pdf-receipt-card:nth-child(2), .receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
+    .pdf-receipt-card:nth-child(3), .receipt-card:nth-child(3) { border-right: 1px dashed #999; }
     
     /* 絕對座標結界 */
     .pdf-receipt-inner, .receipt-inner { 
@@ -361,7 +361,7 @@
         return res.replace(/零$/, '');
     }
 
-    // 🌟 100% 刀刻級絕對座標：全域霸氣粗體收據 🌟
+    // 🌟 100% 刀刻級絕對座標：神級復刻圖四收據 HTML 產生器 🌟
     function buildReceiptsHTML() {
         let html = '';
         let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
@@ -370,10 +370,14 @@
         let totalReceipts = Math.ceil(validSpaces.length / 4) * 4;
         if (totalReceipts === 0 && validSpaces.length === 0) totalReceipts = 4;
         
-        // 🌟 偽直書轉換器：全部強制加上 font-weight: bold 🌟
-        let getVertCh = (str) => {
+        // 偽直書轉換器：將字串拆解並疊加 (粗體)
+        let getVertChBold = (str) => {
             if (!str) return '';
             return String(str).split('').map(c => `<span style="display:block; line-height:1.15; font-weight:bold;">${c}</span>`).join('');
+        };
+        let getVertChNormal = (str) => {
+            if (!str) return '';
+            return String(str).split('').map(c => `<span style="display:block; line-height:1.15; font-weight:normal;">${c}</span>`).join('');
         };
 
         for (let i = 0; i < totalReceipts; i += 4) {
@@ -387,61 +391,72 @@
                 let spaceId = space ? String(space.SpaceID || '') : '';
                 let amt = space ? (space.Amount || '') : '';
                 
-                let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '');
+                // 🌟 未繳費一律先預印參仟陸佰 🌟
+                let displayAmt = '';
+                if (amt === '3600') {
+                    displayAmt = '參仟陸佰';
+                } else if (amt) {
+                    displayAmt = toChineseAmt(amt);
+                } else {
+                    displayAmt = '參仟陸佰'; // 沒繳費就預印 3600
+                }
                 
-                let vertName = getVertCh(name);
-                
-                // 🌟 未繳費的完美空格魔法：塞入隱形的「參仟陸佰」，保證上下間距完全鎖死 🌟
-                let vertAmtHtml = displayAmt ? getVertCh(displayAmt) : `<div style="visibility:hidden;">${getVertCh('參仟陸佰')}</div>`;
+                let vertName = getVertChNormal(name);
+                let vertAmtHtml = getVertChNormal(displayAmt);
                 
                 let yearStr = currentYear; // 即使是空白模板也要印 115
                 let periodStr = `${currentMonth}~${currentMonth+1}`; // 即使是空白模板也要印 5-6
                 
-                // 動態縮放超長車位號碼 (如 39-1 自動縮小一點)
-                let idFontSize = spaceId.length > 2 ? '50px' : '75px';
+                // 🌟 動態縮放超長車位號碼 (39-1, 39-2 再縮小以防干涉) 🌟
+                let idFontSize = '75px';
+                if (spaceId.length >= 4) {
+                    idFontSize = '38px'; // 39-1
+                } else if (spaceId.length === 3) {
+                    idFontSize = '50px'; // 100
+                }
 
                 html += `
                 <div class="pdf-receipt-card receipt-card">
                   <div class="pdf-receipt-inner receipt-inner">
                     
                     <div style="position: absolute; right: 4%; top: 10%; width: 10%; text-align: center; font-size: 30px; letter-spacing: 5px;">
-                        ${getVertCh("茲收到")}
+                        ${getVertChBold("茲收到")}
                     </div>
 
                     <div style="position: absolute; right: 16%; top: 6%; bottom: 6%; width: 15%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
                         <div style="font-size: 26px; min-height: 80px;">${vertName}</div>
-                        <div style="font-size: 20px;">${getVertCh("君承租本殿停車場")}</div>
-                        <div style="font-size: 32px; font-family: Arial, sans-serif; font-weight: bold; margin-bottom: 5px;">${periodStr}</div>
-                        <div style="font-size: 20px;">${getVertCh("月份")}</div>
+                        <div style="font-size: 20px;">${getVertChBold("君承租本殿停車場")}</div>
+                        <div style="font-size: 32px; font-family: Arial, sans-serif; font-weight: normal; margin-bottom: 5px;">${periodStr}</div>
+                        <div style="font-size: 20px;">${getVertChBold("月份")}</div>
                     </div>
 
                     <div style="position: absolute; right: 33%; top: 12%; bottom: 15%; width: 15%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
-                        <div style="font-size: ${idFontSize}; font-family: Arial, sans-serif; font-weight: bold; line-height: 1; margin-bottom: 20px;">${spaceId}</div>
-                        <div style="font-size: 20px;">${getVertCh("號車位之清潔費")}</div>
+                        <div style="font-size: ${idFontSize}; font-family: Arial, sans-serif; font-weight: normal; line-height: 1; margin-bottom: 20px;">${spaceId}</div>
+                        <div style="font-size: 20px;">${getVertChBold("號車位之清潔費")}</div>
                     </div>
 
                     <div style="position: absolute; right: 48%; top: 25%; bottom: 15%; width: 12%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
-                        <div style="font-size: 20px;">${getVertCh("新台幣")}</div>
+                        <div style="font-size: 20px;">${getVertChBold("新台幣")}</div>
                         <div style="font-size: 22px; letter-spacing: 2px; margin: 15px 0;">${vertAmtHtml}</div>
-                        <div style="font-size: 20px;">${getVertCh("元整")}</div>
+                        <div style="font-size: 20px;">${getVertChBold("元整")}</div>
                     </div>
 
-                    <div style="position: absolute; right: 64%; top: 20%; width: 10%; text-align: center; font-size: 24px;">
-                        ${getVertCh("此據")}
+                    <div style="position: absolute; right: 64%; top: 48%; width: 10%; text-align: center; font-size: 24px;">
+                        ${getVertChBold("此據")}
                     </div>
                     
                     <div style="position: absolute; right: 75%; top: 32%; width: 10%; text-align: center; font-size: 24px;">
-                        ${getVertCh("珠靈殿管理委員會")}
+                        ${getVertChBold("珠靈殿管理委員會")}
                     </div>
 
                     <div style="position: absolute; right: 88%; top: 10%; bottom: 5%; width: 10%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
-                        <div style="font-size: 20px;">${getVertCh("中華民國")}</div>
-                        <div style="font-size: 22px; font-family: Arial, sans-serif; font-weight: bold; margin-top: 5px;">${yearStr}</div>
-                        <div style="font-size: 20px;">${getVertCh("年")}</div>
+                        <div style="font-size: 20px;">${getVertChBold("中華民國")}</div>
+                        <div style="font-size: 22px; font-family: Arial, sans-serif; font-weight: normal; margin-top: 5px;">${yearStr}</div>
+                        <div style="font-size: 20px;">${getVertChBold("年")}</div>
                         <div style="flex-grow: 0.4;"></div>
-                        <div style="font-size: 20px;">${getVertCh("月")}</div>
+                        <div style="font-size: 20px;">${getVertChBold("月")}</div>
                         <div style="flex-grow: 0.6;"></div>
-                        <div style="font-size: 20px;">${getVertCh("日")}</div>
+                        <div style="font-size: 20px;">${getVertChBold("日")}</div>
                     </div>
 
                   </div>
