@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>珠靈殿停車管理系統</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 🌟 匯入強大的 PDF 產生器套件 🌟 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
   <style>
@@ -90,19 +89,20 @@
        ========================================= */
     #pdf-export-area { position: absolute; left: -9999px; top: 0; background: #fff; color: #000; font-family: "BiauKai", "DFKai-sb", "標楷體", serif; }
 
-    /* --- 總表樣式 (精準防溢出邊界 287x197) --- */
-    .pdf-page-map, .page-map { position: relative; width: 287mm; height: 197mm; box-sizing: border-box; background-color: #fff; overflow: hidden; }
+    /* --- 總表樣式 (邊界縮減至 285x190mm，絕對防溢出) --- */
+    .pdf-page-map, .page-map { position: relative; width: 285mm; height: 190mm; box-sizing: border-box; background-color: #fff; overflow: hidden; page-break-after: always;}
+    .pdf-page-map:last-child, .page-map:last-child { page-break-after: auto; }
     .pdf-excel-map, .excel-map { width: calc(100% - 2px); margin: 1px; border-collapse: collapse; text-align: center; table-layout: fixed; font-family: "BiauKai", "標楷體", serif; }
-    .pdf-excel-map td, .excel-map td { border: 1.5px solid #000; height: 27px; overflow: hidden; white-space: nowrap; word-break: break-all; }
+    .pdf-excel-map td, .excel-map td { border: 1.5px solid #000; height: 26px; overflow: hidden; white-space: nowrap; word-break: break-all; }
     .pdf-m-id, .m-id { font-weight: bold; font-size: 16px; background-color: #fff !important; }
     .pdf-m-name, .m-name { font-weight: bold; font-size: 16px; }
     .pdf-m-text, .m-text { font-size: 11px; font-weight: bold; letter-spacing: -0.5px; font-family: Arial, sans-serif; }
     .pdf-right-map td, .right-map td { border: 1.5px solid #000; }
 
-    /* --- 🌟 新版 100% 絕對座標復刻收據樣式 (精準防溢出邊界 200x287) 🌟 --- */
+    /* --- 🌟 新版：鋼鐵 Flexbox 排版收據 (198x285mm 防裁切) 🌟 --- */
     .pdf-page-receipts, .page-receipts {
-      width: 200mm; 
-      height: 287mm; 
+      width: 198mm; 
+      height: 285mm; 
       margin: 0 auto;
       display: grid; 
       grid-template-columns: 1fr 1fr; 
@@ -110,17 +110,17 @@
       box-sizing: border-box;
       page-break-after: always;
       background-color: #fff;
-      border: 1.5px solid #000; /* 外層粗黑框 */
+      border: 2px solid #000; /* 外層粗黑框 */
       overflow: hidden;
     }
     .pdf-page-receipts:last-child, .page-receipts:last-child {
-      page-break-after: auto; /* 徹底消滅空白頁 */
+      page-break-after: auto; 
     }
     
     .pdf-receipt-card, .receipt-card { 
       position: relative; 
       box-sizing: border-box; 
-      padding: 15mm; 
+      padding: 12mm 8mm; 
     }
     
     /* 精準內線：形成完美十字 */
@@ -128,24 +128,26 @@
     .pdf-receipt-card:nth-child(2), .receipt-card:nth-child(2) { border-bottom: 1px solid #000; }
     .pdf-receipt-card:nth-child(3), .receipt-card:nth-child(3) { border-right: 1px solid #000; }
     
-    /* 座標結界：強制標楷體加粗 */
+    /* 🌟 由右至左鋼鐵佈局 🌟 */
     .pdf-receipt-inner, .receipt-inner { 
       width: 100%; height: 100%; 
       display: flex; flex-direction: row-reverse; justify-content: space-between; 
       font-family: "BiauKai", "DFKai-sb", "標楷體", serif; 
       font-weight: bold;
     }
-    .col { display: flex; flex-direction: column; align-items: center; }
+    .v-col { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+    .v-between { justify-content: space-between; }
+    .v-center { justify-content: center; }
+    .v-grow { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
 
     #print-area { display: none; }
     @media print {
       body { background-color: #fff; margin: 0; padding: 0; }
       #main-app, #auth-screen, .modal { display: none !important; }
-      #print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; color: #000; font-family: "BiauKai", "標楷體", serif; }
+      #print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; color: #000; }
       @page { margin: 5mm; }
       @page landscape_page { size: A4 landscape; margin: 5mm; }
       @page portrait_page { size: A4 portrait; margin: 5mm; }
-
       .page-map { page: landscape_page; }
       .page-receipts { page: portrait_page; }
     }
@@ -245,7 +247,6 @@
     let globalUserId = ""; 
 
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
-
     function isLineBrowser() { return /Line/i.test(navigator.userAgent); }
 
     function fillAmountAndTime() {
@@ -365,112 +366,77 @@
         return res.replace(/零$/, '');
     }
 
-    // 🌟 100% 絕對座標：大字體 + 標楷粗體 + 英數橫向 + 補齊空白模板 🌟
+    // 🌟 100% 絕對穩定！採用 Flexbox 鋼鐵佈局的收據產生器 🌟
     function buildReceiptsHTML() {
         let html = '';
         let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
         
-        // 🌟 智慧正則表達式：中文字獨立斷行，英數字/符號結合成橫向區塊 🌟
-        let getVertStr = (str) => {
-            if (!str) return '';
-            let tokens = String(str).match(/[\u4e00-\u9fa5]|[\u3000-\u303F]|[\uFF00-\uFFEF]|[a-zA-Z0-9\-~\s]+/g) || [];
-            return tokens.map(token => {
-                // 如果是英數字或符號，使用橫向 block 顯示
-                if (/^[a-zA-Z0-9\-~\s]+$/.test(token)) {
-                    return `<span style="display:block; margin: 4px 0; font-family: Arial, sans-serif; white-space: nowrap; transform: scale(1.1);">${token.trim()}</span>`;
-                } else {
-                    // 中文字正常斷行疊加
-                    return `<span style="display:block; line-height:1.2;">${token}</span>`;
-                }
-            }).join('');
-        };
-
-        // 計算總張數 (補齊 4 的倍數，保證最後一頁也印滿 4 格模板)
+        // 補齊到 4 的倍數，確保最後一頁也是印滿 4 格模板！
         let totalReceipts = Math.ceil(validSpaces.length / 4) * 4;
+
+        // 垂直文字轉換器 (自動斷行)
+        let vertCh = (str) => {
+            if (!str || str.trim() === '') return '';
+            return String(str).split('').join('<br>');
+        };
 
         for (let i = 0; i < totalReceipts; i += 4) {
             html += `<div class="pdf-page-receipts page-receipts">`;
             
             for (let j = 0; j < 4; j++) {
-                let space = validSpaces[i + j] || null; // 抓不到資料就塞入 null (空白模板)
+                // 如果沒有資料，就塞入空白物件 (完美生成空白格子)
+                let space = validSpaces[i + j] || { SpaceID: '', Name: '', Amount: '' }; 
                 
-                let name = space ? (space.Name || '') : '';
-                let spaceId = space ? (space.SpaceID || '') : '';
-                let amt = space ? (space.Amount || '') : '';
+                let name = space.Name || '';
+                let spaceId = String(space.SpaceID || '');
+                let amt = space.Amount || '';
                 
                 let displayAmt = (amt === '3600') ? '參仟陸佰' : (amt ? toChineseAmt(amt) : '');
-                
-                let vertName = getVertStr(name);
-                let vertAmt = getVertStr(displayAmt);
-                let vertYear = getVertStr(currentYear);
-                let vertPeriod = getVertStr(`${currentMonth}-${currentMonth+1}`);
+
+                // 根據車位字元長度動態調整大小 (例如 39-1 要縮小一點)
+                let idFontSize = spaceId.length > 2 ? '55px' : '75px';
 
                 html += `
                 <div class="pdf-receipt-card receipt-card">
                   <div class="pdf-receipt-inner receipt-inner">
                     
-                    <!-- 1. 茲收到 -->
-                    <div class="col" style="justify-content: center; width: 12%;">
-                        <div style="font-size: 34px; letter-spacing: 12px; margin-bottom: 20px;">
-                            ${getVertStr("茲收到")}
-                        </div>
+                    <div class="v-col" style="padding-top: 15mm; font-size: 28px;">茲<br><br>收<br><br>到</div>
+
+                    <div class="v-col v-between" style="padding-top: 5mm; width: 15%;">
+                        <div style="font-size: 26px; min-height: 80px;">${vertCh(name)}</div>
+                        <div style="font-size: 16px;">君<br>承<br>租<br>本<br>殿<br>停<br>車<br>場</div>
                     </div>
-                    
-                    <!-- 2. 姓名與固定文字 -->
-                    <div class="col" style="justify-content: flex-start; padding-top: 20px; width: 18%;">
-                        <div style="font-size: 32px; margin-bottom: 30px; min-height: 120px;">
-                            ${vertName}
-                        </div>
-                        <div style="font-size: 18px; letter-spacing: 3px;">
-                            ${getVertStr("君承租本殿停車場")}
-                        </div>
+
+                    <div class="v-col v-center" style="width: 25%;">
+                        <div style="font-size: ${idFontSize}; font-family: Arial, sans-serif; font-weight: bold; letter-spacing: -2px;">${spaceId}</div>
                     </div>
-                    
-                    <!-- 3. 車位大號碼 (英數字會自動橫排) -->
-                    <div class="col" style="justify-content: center; width: 22%;">
-                        <span style="font-size: 85px; font-family: Arial, sans-serif;">${spaceId}</span>
+
+                    <div class="v-col" style="padding-top: 5mm;">
+                        <div style="font-size: 16px;">號<br>車<br>位<br>之<br>清<br>潔<br>費</div>
                     </div>
-                    
-                    <!-- 4. 號車位... -->
-                    <div class="col" style="justify-content: flex-start; padding-top: 20px; width: 12%;">
-                        <div style="font-size: 18px; letter-spacing: 3px;">
-                            ${getVertStr("號車位之清潔費")}
-                        </div>
+
+                    <div class="v-col v-between" style="padding: 5mm 0; width: 15%;">
+                        <div style="font-size: 16px;">新<br>台<br>幣</div>
+                        <div class="v-grow v-center" style="font-size: 24px; letter-spacing: 5px;">${vertCh(displayAmt)}</div>
+                        <div style="font-size: 16px;">元<br>整</div>
                     </div>
-                    
-                    <!-- 5. 金額 (空白時上下間距依然完美撐開) -->
-                    <div class="col" style="justify-content: space-between; padding: 20px 0; width: 14%;">
-                        <div style="font-size: 20px;">${getVertStr("新台幣")}</div>
-                        <div style="font-size: 30px; letter-spacing: 6px; display: flex; flex-direction: column; justify-content: center; flex-grow: 1; margin: 15px 0;">
-                            ${vertAmt}
-                        </div>
-                        <div style="font-size: 20px;">${getVertStr("元整")}</div>
+
+                    <div class="v-col v-between" style="padding: 5mm 0;">
+                        <div style="font-size: 18px;">珠<br>靈<br>殿<br>管<br>理<br>委<br>員<br>會</div>
+                        <div style="font-size: 22px;">此<br>據</div>
                     </div>
-                    
-                    <!-- 6. 管委會 此據 -->
-                    <div class="col" style="justify-content: space-between; padding: 20px 0; width: 12%;">
-                        <div style="font-size: 20px; letter-spacing: 3px;">
-                            ${getVertStr("珠靈殿管理委員會")}
+
+                    <div class="v-col v-between" style="padding: 5mm 0; width: 12%;">
+                        <div class="v-col">
+                            <div style="font-size: 14px;">中<br>華<br>民<br>國</div>
+                            <div style="font-size: 18px; font-family: Arial, sans-serif; font-weight: bold; margin: 10px 0;">${currentYear}</div>
+                            <div style="font-size: 14px;">年</div>
+                            <div style="font-size: 18px; font-family: Arial, sans-serif; font-weight: bold; margin: 10px 0;">${currentMonth}-${currentMonth+1}</div>
+                            <div style="font-size: 14px;">月<br>份</div>
                         </div>
-                        <div style="font-size: 26px; letter-spacing: 5px;">
-                            ${getVertStr("此據")}
-                        </div>
+                        <div style="font-size: 14px;">日</div>
                     </div>
-                    
-                    <!-- 7. 日期 -->
-                    <div class="col" style="justify-content: space-between; padding: 20px 0; width: 10%;">
-                        <div class="col" style="font-size: 18px; line-height: 1.3;">
-                            ${getVertStr("中華民國")}
-                            <div style="margin: 12px 0; font-size: 22px; font-family: Arial, sans-serif;">${vertYear}</div>
-                            ${getVertStr("年")}
-                            <div style="margin: 12px 0; font-size: 22px; font-family: Arial, sans-serif;">${vertPeriod}</div>
-                            ${getVertStr("月份")}
-                        </div>
-                        <div style="font-size: 18px;">
-                            ${getVertStr("日")}
-                        </div>
-                    </div>
-                    
+
                   </div>
                 </div>`;
             }
@@ -488,6 +454,9 @@
         document.head.appendChild(style);
     }
 
+    // =========================================
+    // 🖨️ 匯出 PDF：總表 (285x190 防溢出)
+    // =========================================
     function downloadMapPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         if (isLineBrowser()) {
@@ -575,6 +544,7 @@
         let container = document.getElementById('pdf-export-area');
         container.innerHTML = mapHtml;
 
+        // 🌟 防禦極限設定：5mm 邊界 + scale 2 高畫質 🌟
         let opt = {
           margin:       5, 
           filename:     `珠靈殿總表_${currentYear}_${currentMonth}-${currentMonth+1}月.pdf`,
@@ -589,6 +559,9 @@
         });
     }
 
+    // =========================================
+    // 🖨️ 匯出 PDF：Flexbox 終極防跑版收據
+    // =========================================
     function downloadReceiptsPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         if (isLineBrowser()) {
@@ -606,6 +579,7 @@
         container.innerHTML = '';
         container.appendChild(wrapper);
 
+        // 🌟 防溢出保護：指定 5mm 邊界，配合內層 198x285mm，徹底根絕空白頁 🌟
         let opt = {
           margin:       5,
           filename:     `珠靈殿收據_${currentYear}_${currentMonth}-${currentMonth+1}月.pdf`,
