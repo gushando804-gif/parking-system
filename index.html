@@ -72,13 +72,20 @@
 
     .pdf-page-receipts { 
       width: 196mm; height: 284mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; 
-      page-break-after: always; overflow: hidden; margin: 0 auto;
+      page-break-after: always; overflow: hidden; margin: 0 auto; border: none;
     }
     .pdf-page-receipts:last-child { page-break-after: auto; }
+    
     .pdf-receipt-card { 
       position: relative; box-sizing: border-box; padding: 10mm;
-      border: 1px dashed #999; /* 十字虛線 */
+      border: none; /* 🌟 徹底移除所有外邊框 🌟 */
     }
+    
+    /* 🌟 只留下內部的十字虛線 🌟 */
+    .pdf-receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
+    .pdf-receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
+    .pdf-receipt-card:nth-child(3) { border-right: 1px dashed #999; }
+
     .receipt-inner { 
       position: absolute; top: 5mm; left: 5mm; right: 5mm; bottom: 5mm;
       display: flex; flex-direction: row-reverse; justify-content: space-between; 
@@ -250,7 +257,6 @@
       document.getElementById('status-msg').style.display = 'none';
     }
 
-    // 🌟 修正版：完美轉換中文金額，精準拔除尾數的「零」 🌟
     function toChineseAmt(numStr) {
         if (!numStr) return '';
         let str = numStr.toString().trim();
@@ -266,7 +272,6 @@
         return res.replace(/零$/, '');
     }
 
-    // 🌟 核心：強制所有字串轉為粗體垂直排列 🌟
     function buildReceiptsHTML() {
         let html = '';
         let validSpaces = globalSpaces.length > 0 ? globalSpaces : [{SpaceID: '', Name: '', Amount: '', Status: '空位'}]; 
@@ -282,11 +287,9 @@
             for (let j = 0; j < 4; j++) {
                 let space = validSpaces[i + j] || { SpaceID: '', Name: '', Amount: '', Status: '空位' };
                 
-                // 判斷是否為空位 (未出租)
                 let isUnrented = (!space.Name || space.Name.toString().trim() === '' || space.Status === '空位');
                 let nameToPrint = isUnrented ? '' : space.Name;
                 
-                // 判斷列印金額
                 let amtToPrint = '';
                 if (!isUnrented) {
                     if (!space.Amount || space.Amount.toString().trim() === '' || space.Amount.toString() === '3600') {
@@ -297,7 +300,8 @@
                 }
                 
                 let vertAmtHtml = amtToPrint !== '' ? getVertChBold(amtToPrint) : `<div style="visibility:hidden; font-weight:900 !important;">${getVertChBold('參仟陸佰')}</div>`;
-                
+                let targetYear = (currentMonth >= 11) ? currentYear + 1 : currentYear;
+
                 html += `
                 <div class="pdf-receipt-card">
                   <div class="receipt-inner">
@@ -306,8 +310,7 @@
                     <div class="v-col" style="width: 18%;">
                         <div style="font-size: 26px; margin-bottom: 10px; min-height: 70px;">${getVertChBold(nameToPrint)}</div>
                         <div style="font-size: 18px; margin-bottom: 8px;">${getVertChBold('君承租本殿停車場')}</div>
-                        
-                        <div style="font-size: 40px; font-family: Arial; font-weight: 900 !important;">${currentYear}</div>
+                        <div style="font-size: 40px; font-family: Arial; font-weight: 900 !important;">${targetYear}</div>
                         <div style="font-size: 16px; margin-bottom: 4px;">${getVertChBold('年')}</div>
                         <div style="font-size: 40px; font-family: Arial; font-weight: 900 !important; margin: 4px 0;">${currentMonth}~${currentMonth+1}</div>
                         <div style="font-size: 18px;">${getVertChBold('月份')}</div>
@@ -350,7 +353,6 @@
         document.getElementById('status-msg').style.display = 'block';
         document.getElementById('status-msg').innerText = "📄 PDF 產生中...";
 
-        // 生成總表 HTML
         const topIds = ['15','13','12','11','10','9','8','7','6','5','3','2','1'];
         const botIdsRow1 = ['16','17','18','19','20','21','22','23','25','26'];
         const botIdsRow2 = ['37','36','35','33','32','31','30','29','28','27'];
