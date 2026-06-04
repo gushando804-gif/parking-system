@@ -73,12 +73,19 @@
     .pdf-page-receipts { 
       width: 196mm; height: 284mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; 
       page-break-after: always; overflow: hidden; margin: 0 auto;
+      border: none; /* 確保外層無邊框 */
     }
     .pdf-page-receipts:last-child { page-break-after: auto; }
     .pdf-receipt-card { 
       position: relative; box-sizing: border-box; padding: 10mm;
-      border: 1px dashed #999; /* 十字虛線 */
+      border: none; /* 移除預設邊框 */
     }
+    
+    /* 🌟 精準打擊：只留下內部十字裁切線 🌟 */
+    .pdf-receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
+    .pdf-receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
+    .pdf-receipt-card:nth-child(3) { border-right: 1px dashed #999; }
+
     .receipt-inner { 
       position: absolute; top: 5mm; left: 5mm; right: 5mm; bottom: 5mm;
       display: flex; flex-direction: row-reverse; justify-content: space-between; 
@@ -250,7 +257,6 @@
       document.getElementById('status-msg').style.display = 'none';
     }
 
-    // 🌟 修正版：完美轉換中文金額，精準拔除尾數的「零」 🌟
     function toChineseAmt(numStr) {
         if (!numStr) return '';
         let str = numStr.toString().trim();
@@ -282,7 +288,7 @@
             for (let j = 0; j < 4; j++) {
                 let space = validSpaces[i + j] || { SpaceID: '', Name: '', Amount: '', Status: '空位' };
                 
-                // 判斷是否為空位 (未出租)
+                // 判斷是否為空位
                 let isUnrented = (!space.Name || space.Name.toString().trim() === '' || space.Status === '空位');
                 let nameToPrint = isUnrented ? '' : space.Name;
                 
@@ -298,17 +304,19 @@
                 
                 let vertAmtHtml = amtToPrint !== '' ? getVertChBold(amtToPrint) : `<div style="visibility:hidden; font-weight:900 !important;">${getVertChBold('參仟陸佰')}</div>`;
                 
+                // 跨年智慧推算
+                let targetYear = (currentMonth >= 11) ? currentYear + 1 : currentYear;
+
                 html += `
                 <div class="pdf-receipt-card">
                   <div class="receipt-inner">
                     <div class="v-col" style="width: 10%; font-size: 22px;">${getVertChBold('茲收到')}</div>
 
                     <div class="v-col" style="width: 18%;">
-                        <div style="font-size: 26px; margin-bottom: 10px; min-height: 70px;">${getVertChBold(nameToPrint)}</div>
-                        <div style="font-size: 18px; margin-bottom: 8px;">${getVertChBold('君承租本殿停車場')}</div>
-                        
-                        <div style="font-size: 40px; font-family: Arial; font-weight: 900 !important;">${currentYear}</div>
-                        <div style="font-size: 16px; margin-bottom: 4px;">${getVertChBold('年')}</div>
+                        <div style="font-size: 28px; margin-bottom: 20px; min-height: 80px;">${getVertChBold(nameToPrint)}</div>
+                        <div style="font-size: 18px; margin-bottom: 10px;">${getVertChBold('君承租本殿停車場')}</div>
+                        <div style="font-size: 40px; font-family: Arial; font-weight: 900 !important;">${targetYear}</div>
+                        <div style="font-size: 18px; margin-bottom: 4px;">${getVertChBold('年')}</div>
                         <div style="font-size: 40px; font-family: Arial; font-weight: 900 !important; margin: 4px 0;">${currentMonth}~${currentMonth+1}</div>
                         <div style="font-size: 18px;">${getVertChBold('月份')}</div>
                     </div>
@@ -329,7 +337,7 @@
                         <div style="font-size: 20px;">${getVertChBold('珠靈殿管理委員會')}</div>
                     </div>
 
-                    <div class="v-col" style="width: 10%; justify-content: space-between; height: 100%; padding: 10px 0;">
+                    <div class="v-col" style="width: 10%; justify-content: space-between; padding: 10px 0;">
                         <div style="font-size: 18px;">${getVertChBold('中華民國')}</div>
                         <div style="font-size: 18px;">${getVertChBold('年')}</div>
                         <div style="font-size: 18px;">${getVertChBold('月')}</div>
