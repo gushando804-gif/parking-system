@@ -121,13 +121,14 @@
     .pdf-receipt-card, .receipt-card { 
       position: relative; 
       box-sizing: border-box; 
+      border: none; /* 🌟 移除所有外邊框 🌟 */
     }
     
-    /* 🌟 精準灰色虛線：形成完美十字裁切線 🌟 */
+    /* 🌟 只留下內部的十字虛線 🌟 */
     .pdf-receipt-card:nth-child(1), .receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
     .pdf-receipt-card:nth-child(2), .receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
     .pdf-receipt-card:nth-child(3), .receipt-card:nth-child(3) { border-right: 1px dashed #999; }
-    
+
     /* 絕對座標結界 */
     .pdf-receipt-inner, .receipt-inner { 
       position: absolute;
@@ -202,6 +203,12 @@
         <div class="input-group">
           <label>備註 (選填)：</label>
           <input type="text" id="modal-note" placeholder="例如: 5/15起租，單日計算">
+        </div>
+        
+        <!-- 🌟 新增的匯款專屬選項 🌟 -->
+        <div class="input-group" style="display: flex; align-items: center; gap: 12px; background-color: #e6f2ff; padding: 15px; border-radius: 8px; border: 2px solid #b8daff;">
+          <input type="checkbox" id="modal-remit" style="width: 28px; height: 28px; cursor: pointer;">
+          <label for="modal-remit" style="margin: 0; font-size: 22px; font-weight: bold; color: #0056b3; cursor: pointer; flex: 1;">標記為「匯款」繳費</label>
         </div>
         
         <div class="btn-row">
@@ -328,8 +335,19 @@
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
           var displayPhone = space.Phone ? `<a href="tel:${space.Phone}" class="phone-link" onclick="event.stopPropagation();">${space.Phone}</a>` : "無電話";
           var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
-          var displayNote = space.Note ? `<span class="badge-note" title="${space.Note}">📝</span>` : "";
           var displayTime = (isPaid && space.PaymentTime) ? `<span class="badge-time">🕒 ${space.PaymentTime}</span>` : "";
+
+          // 🌟 匯款標記解析 (從備註或是獨立欄位讀取) 🌟
+          var rawNote = space.Note || "";
+          var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
+          
+          // 清理要在畫面上顯示的備註內容，把匯款字眼過濾掉
+          var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
+          if (cleanNote === '匯') cleanNote = ''; 
+          var displayNote = cleanNote ? `<span class="badge-note" title="${cleanNote}">📝</span>` : "";
+
+          // 🌟 產生列表最左側的「匯」字徽章 🌟
+          var remitBadge = isRemit ? `<span style="position: absolute; left: 12px; background-color: #007bff; color: white; padding: 3px 8px; border-radius: 6px; font-size: 16px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">匯</span>` : '';
 
           div.innerHTML = `
             <div class="space-layout">
@@ -337,7 +355,10 @@
               <div class="space-info">
                 <div class="space-row-top"><span class="info-name">${displayName}</span><span class="info-plate">${displayPlate}</span></div>
                 <div class="space-row-middle">${displayPhone}${displayNote}</div>
-                <div class="space-row-bottom">${displayAmount}${displayTime}</div>
+                <div class="space-row-bottom" style="position: relative;">
+                    ${remitBadge}
+                    ${displayAmount}${displayTime}
+                </div>
               </div>
             </div>`;
         }
@@ -356,7 +377,7 @@
         let res = '';
         for(let i=0; i<str.length; i++) {
             let n = parseInt(str[i]); let u = str.length - 1 - i;
-            if (n !== 0) res += zh[n] + unit[u]; else if (res.slice(-1) !== '零') res += '零';
+            if (n !== 0) res += zh[n] + unit[u]; else if (res.length > 0 && res.slice(-1) !== '零') res += '零';
         }
         return res.replace(/零$/, '');
     }
@@ -364,13 +385,12 @@
     // 🌟 100% 刀刻級絕對座標：強制所有變數套用最高標楷粗體 🌟
     function buildReceiptsHTML() {
         let html = '';
-        let validSpaces = globalSpaces.filter(s => s.Name && s.Name.trim() !== '');
+        // 不再過濾空位，保留所有車位，讓空位也能印出空白模板
+        let validSpaces = globalSpaces && globalSpaces.length > 0 ? globalSpaces : [];
         
-        // 補齊到 4 的倍數，保證最後一頁印滿完美的十字空白模板
         let totalReceipts = Math.ceil(validSpaces.length / 4) * 4;
         if (totalReceipts === 0 && validSpaces.length === 0) totalReceipts = 4;
         
-        // 🌟 偽直書轉換器：強制每個字都綁定 font-weight: bold 🌟
         let getVertCh = (str) => {
             if (!str) return '';
             return String(str).split('').map(c => `<span style="display:block; line-height:1.15; font-weight:bold;">${c}</span>`).join('');
@@ -380,33 +400,35 @@
             html += `<div class="pdf-page-receipts page-receipts">`;
             
             for (let j = 0; j < 4; j++) {
-                // 如果沒有資料（補齊用），就塞入空白模板，但保留固定字樣
                 let space = validSpaces[i + j] || null;
                 
-                let name = space ? (space.Name || '') : '';
+                let isUnrented = !space || !space.Name || space.Name.toString().trim() === '' || space.Status === '空位';
+                
+                let name = isUnrented ? '' : space.Name;
                 let spaceId = space ? String(space.SpaceID || '') : '';
                 let amt = space ? (space.Amount || '') : '';
                 
-                // 🌟 未繳費一律先預印參仟陸佰 🌟
                 let displayAmt = '';
-                if (amt === '3600' || !amt || amt.trim() === '') {
-                    displayAmt = '參仟陸佰'; // 沒繳費或空值就預印 3600
-                } else {
-                    displayAmt = toChineseAmt(amt);
+                if (!isUnrented) {
+                    if (amt === '3600' || !amt || amt.toString().trim() === '') {
+                        displayAmt = '參仟陸佰'; 
+                    } else {
+                        displayAmt = toChineseAmt(amt);
+                    }
                 }
                 
                 let vertName = getVertCh(name);
-                let vertAmtHtml = getVertCh(displayAmt);
+                let vertAmtHtml = displayAmt ? getVertCh(displayAmt) : `<div style="visibility:hidden; font-weight:bold;">${getVertCh('參仟陸佰')}</div>`;
                 
-                let yearStr = currentYear; // 即使是空白模板也要印 115
-                let periodStr = `${currentMonth}~${currentMonth+1}`; // 即使是空白模板也要印 5-6
+                let yearStr = currentYear; 
+                let targetYear = (currentMonth >= 11) ? currentYear + 1 : currentYear; 
+                let periodStr = `${currentMonth}~${currentMonth+1}`; 
                 
-                // 🌟 動態縮放超長車位號碼 (39-1, 39-2 自動縮小，防干涉) 🌟
                 let idFontSize = '75px';
                 if (spaceId.length >= 4) {
-                    idFontSize = '38px'; // 超過4碼縮更小 (如 39-1)
+                    idFontSize = '38px'; 
                 } else if (spaceId.length === 3) {
-                    idFontSize = '50px'; // 3碼 (如 100)
+                    idFontSize = '50px'; 
                 }
 
                 html += `
@@ -420,7 +442,11 @@
                     <div style="position: absolute; right: 16%; top: 6%; bottom: 6%; width: 15%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
                         <div style="font-size: 26px; min-height: 80px; font-weight: bold;">${vertName}</div>
                         <div style="font-size: 20px; font-weight: bold;">${getVertCh("君承租本殿停車場")}</div>
-                        <div style="font-size: 32px; font-family: Arial, sans-serif; font-weight: bold; margin-bottom: 5px;">${periodStr}</div>
+                        
+                        <div style="font-size: 32px; font-family: Arial, sans-serif; font-weight: bold; margin-top: 5px;">${targetYear}</div>
+                        <div style="font-size: 20px; font-weight: bold;">${getVertCh("年")}</div>
+                        
+                        <div style="font-size: 32px; font-family: Arial, sans-serif; font-weight: bold;">${periodStr}</div>
                         <div style="font-size: 20px; font-weight: bold;">${getVertCh("月份")}</div>
                     </div>
 
@@ -644,6 +670,7 @@
         document.getElementById('modal-amount').value = "3600";
         document.getElementById('modal-note').value = "";
         document.getElementById('modal-paymentTime').value = "";
+        document.getElementById('modal-remit').checked = false; // 🌟 預設不勾選匯款 🌟
       } else {
         document.getElementById('btn-leave').style.display = 'inline-block';
         document.getElementById('btn-save').innerText = '儲存修改';
@@ -654,8 +681,16 @@
         if(!found) { select.value = "NEW"; customName.style.display = 'block'; customName.value = space.Name; }
         phoneInput.value = space.Phone || ""; plateInput.value = space.LicensePlate || "";
         document.getElementById('modal-amount').value = space.Amount || "";
-        document.getElementById('modal-note').value = space.Note || "";
         document.getElementById('modal-paymentTime').value = space.PaymentTime || "";
+        
+        // 🌟 匯款標記還原與顯示 🌟
+        var rawNote = space.Note || "";
+        var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
+        var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
+        if (cleanNote === '匯') cleanNote = ''; // 自動清除舊格式的匯字
+        
+        document.getElementById('modal-remit').checked = isRemit;
+        document.getElementById('modal-note').value = cleanNote;
       }
       document.getElementById('editModal').style.display = 'block';
     }
@@ -680,15 +715,18 @@
       var spaceId = document.getElementById('modal-spaceId').value;
       var name = document.getElementById('modal-name-select').value;
       if (name === "NEW") name = document.getElementById('modal-name-custom').value.trim();
-      var phone = document.getElementById('modal-phone').value;
-      var plate = document.getElementById('modal-plate').value;
-      var amount = document.getElementById('modal-amount').value.trim();
-      var note = document.getElementById('modal-note').value.trim();
-      var paymentTime = document.getElementById('modal-paymentTime').value.trim();
-      
       if (!name) { alert("請選擇或輸入姓名！"); return; }
+      
+      var isRemit = document.getElementById('modal-remit').checked;
+      var note = document.getElementById('modal-note').value.trim();
+      
+      // 🌟 無痛將匯款狀態藏入備註，完全相容原本的資料庫 🌟
+      if (isRemit) {
+          note = note ? `[匯款] ${note}` : `[匯款]`;
+      }
+      
       closeModal();
-      sendUpdateRequest(spaceId, 'update', name, phone, plate, amount, note, paymentTime);
+      sendUpdateRequest(spaceId, 'update', name, document.getElementById('modal-phone').value, document.getElementById('modal-plate').value, document.getElementById('modal-amount').value.trim(), note, document.getElementById('modal-paymentTime').value.trim(), isRemit);
     }
 
     function leaveSpace() {
@@ -698,10 +736,11 @@
       }
     }
 
-    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '', paymentTime = '') {
+    async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '', paymentTime = '', isRemit = false) {
       document.getElementById('status-msg').style.display = 'block';
       document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
-      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, paymentTime: paymentTime, period: getPeriodString(), uid: globalUserId };
+      // 傳遞時順便將 remittance 放進 payload 以防未來需要
+      var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, paymentTime: paymentTime, remittance: isRemit ? '匯' : '', period: getPeriodString(), uid: globalUserId };
       try {
         const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
         const result = await response.json();
