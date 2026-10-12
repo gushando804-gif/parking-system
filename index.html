@@ -340,7 +340,6 @@
           var rawNote = String(space.Note || "");
           var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
           
-          // 🌟 徹底過濾並隱藏空括號 [] 🌟
           var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
           if (cleanNote === '匯' || cleanNote === '匯款' || cleanNote === '[]' || cleanNote === '[ ]') {
               cleanNote = ''; 
@@ -495,6 +494,7 @@
         document.head.appendChild(style);
     }
 
+    // 🌟 總表繪製邏輯（已加入匯款標記判斷） 🌟
     function downloadMapPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         if (isLineBrowser()) {
@@ -505,11 +505,23 @@
         document.getElementById('status-msg').style.display = 'block';
         document.getElementById('status-msg').innerText = "📄 PDF 產生中，請稍候...";
 
-        function getSpace(id) {
+        let getSpace = (id) => {
             let s = globalSpaces.find(x => x.SpaceID == id);
-            if(!s || !s.Name) return { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;' };
-            return { id: s.SpaceID, name: s.Name, plate: s.LicensePlate || '&nbsp;', phone: s.Phone || '&nbsp;' };
-        }
+            let isRemit = false;
+            if (s) {
+                let rawNote = String(s.Note || "");
+                isRemit = s.Remittance === '匯' || s.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
+            }
+            return s && s.Name ? { id: s.SpaceID, name: s.Name, plate: s.LicensePlate || '&nbsp;', phone: s.Phone || '&nbsp;', isRemit: isRemit } : { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;', isRemit: false };
+        };
+
+        // 建立單獨的車位格子，並根據是否匯款動態加入標記
+        let buildIdCell = (id) => {
+            let isRemit = getSpace(id).isRemit;
+            // 若為匯款，左上角蓋上藍底白字「匯」的印章
+            let remitBadge = isRemit ? `<span style="position:absolute; top:2px; left:2px; font-size:10px; font-family:'BiauKai', '標楷體', serif; background-color:#007bff; color:white; padding:1px 3px; border-radius:3px; line-height:1; letter-spacing:0;">匯</span>` : '';
+            return `<td class="pdf-m-id" style="position:relative;">${remitBadge}${id}</td>`;
+        };
 
         const topIds = ['15','13','12','11','10','9','8','7','6','5','3','2','1'];
         const botIdsRow1 = ['16','17','18','19','20','21','22','23','25','26'];
@@ -524,7 +536,7 @@
 
         mapHtml += `<div style="position:absolute; top:16%; left:0.5%; width:99%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
-        mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + topIds.map(id => buildIdCell(id)).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + topIds.map(id => `<td class="pdf-m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
@@ -533,13 +545,13 @@
 
         mapHtml += `<div style="position:absolute; top:52%; left:0.5%; width:76.15%;">`;
         mapHtml += `<table class="pdf-excel-map">`;
-        mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow1.map(id => buildIdCell(id)).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td class="pdf-m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow1.map(id => `<td>&nbsp;</td>`).join('') + `</tr>`;
         
-        mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="pdf-m-id">${id}</td>`).join('') + `</tr>`;
+        mapHtml += `<tr>` + botIdsRow2.map(id => buildIdCell(id)).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="pdf-m-name">${getSpace(id).name}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="pdf-m-text">${getSpace(id).plate}</td>`).join('') + `</tr>`;
         mapHtml += `<tr>` + botIdsRow2.map(id => `<td class="pdf-m-text">${getSpace(id).phone}</td>`).join('') + `</tr>`;
@@ -549,14 +561,18 @@
         mapHtml += `<div style="position:absolute; top:52%; right:15px; width:14%;">`;
         mapHtml += `<table class="pdf-excel-map pdf-right-map">`;
         rightIds.forEach(id => {
-            let s = getSpace(id);
+            let space = getSpace(id);
+            // 右側區塊的「匯」字標籤
+            let remitBadge = space.isRemit ? `<span style="position:absolute; top:2px; left:2px; font-size:10px; font-family:'BiauKai', '標楷體', serif; background-color:#007bff; color:white; padding:1px 3px; border-radius:3px; line-height:1; letter-spacing:0;">匯</span>` : '';
             mapHtml += `<tr>
                 <td style="width:65%; text-align:center; padding:2px;">
-                    <div class="pdf-m-name" style="margin-bottom:2px;">${s.name}</div>
-                    <div class="pdf-m-text">${s.plate}</div>
-                    <div class="pdf-m-text">${s.phone}</div>
+                    <div class="pdf-m-name" style="margin-bottom:2px;">${space.name}</div>
+                    <div class="pdf-m-text">${space.plate}</div>
+                    <div class="pdf-m-text">${space.phone}</div>
                 </td>
-                <td class="pdf-m-id" style="width:35%; vertical-align:middle; font-size:16px; letter-spacing:-0.5px;">${id}</td>
+                <td class="pdf-m-id" style="width:35%; vertical-align:middle; font-size:16px; letter-spacing:-0.5px; position:relative;">
+                    ${remitBadge}${id}
+                </td>
             </tr>`;
         });
         mapHtml += `</table></div>`;
