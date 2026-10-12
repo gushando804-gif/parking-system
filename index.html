@@ -37,17 +37,22 @@
     .status-unpaid { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } 
     .status-paid { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
     
-    .space-layout { display: flex; height: 100%; min-height: 110px; }
+    /* 🌟 微調卡片最小高度以容納更大的字體 🌟 */
+    .space-layout { display: flex; height: 100%; min-height: 125px; }
     .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
     
     .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 4px 6px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
-    .space-row-middle { display: flex; justify-content: center; align-items: center; padding: 4px 6px; font-size: 21px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
-    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 4px 6px; font-size: 21px; flex: 1; white-space: nowrap; overflow: hidden; }
+    
+    /* 🌟 將電話列與繳費列的字體放大到 26px 🌟 */
+    .space-row-middle { display: flex; justify-content: center; align-items: center; padding: 4px 6px; font-size: 26px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; font-weight: bold; }
+    .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 4px 6px; font-size: 26px; flex: 1; white-space: nowrap; overflow: hidden; }
     
     .info-name { font-size: 26px; font-weight: bold; }
     .info-plate { font-size: 26px; opacity: 0.8; margin-left: 26px; text-overflow: ellipsis; }
-    .badge-amount { font-weight: bold; font-size: 20px; }
+    
+    /* 🌟 繳費金額/狀態同步放大 🌟 */
+    .badge-amount { font-weight: bold; font-size: 26px; }
     .badge-time { margin-left: 8px; font-size: 16px; color: #555; }
     .badge-note { margin-left: 8px; font-size: 20px; }
     
@@ -56,16 +61,16 @@
 
     @media (min-width: 768px) {
       .grid-container { grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 15px; }
-      .space-layout { min-height: 95px; }
+      .space-layout { min-height: 105px; }
       .space-id { font-size: 26px; border-right: 1px solid rgba(0,0,0,0.15); }
       .info-name { font-size: 24px; }
       .info-plate { font-size: 24px; margin-left: 6px; }
-      .space-row-middle { font-size: 16px; padding: 3px; border-bottom: 1px solid rgba(0,0,0,0.15); }
-      .space-row-bottom { font-size: 16px; padding: 3px; }
+      .space-row-middle { font-size: 20px; padding: 3px; border-bottom: 1px solid rgba(0,0,0,0.15); }
+      .space-row-bottom { font-size: 20px; padding: 3px; }
       .space-row-top { border-bottom: 1px solid rgba(0,0,0,0.15); padding: 3px; }
       .parking-space { border-width: 1px; border-radius: 8px; }
       .badge-note { font-size: 16px; }
-      .badge-amount { font-size: 16px; }
+      .badge-amount { font-size: 20px; }
       .badge-time { font-size: 14px; }
     }
 
@@ -99,7 +104,7 @@
     .pdf-m-text, .m-text { font-size: 11px; letter-spacing: -0.5px; font-family: Arial, sans-serif !important; }
     .pdf-right-map td, .right-map td { border: 1.5px solid #000; }
 
-    /* --- 🌟 終極鋼鐵絕對座標收據樣式 (196x284mm 極限防空白頁) 🌟 --- */
+    /* --- 🌟 終極鋼鐵絕對座標收據樣式 (196x284mm) 🌟 --- */
     .pdf-page-receipts, .page-receipts {
       width: 196mm; 
       height: 284mm; 
@@ -110,26 +115,24 @@
       box-sizing: border-box;
       page-break-after: always;
       background-color: #fff;
-      border: none; /* 🌟 徹底拔除外層黑框 🌟 */
+      border: none;
       overflow: hidden;
       font-family: "BiauKai", "DFKai-sb", "標楷體", serif !important;
     }
     .pdf-page-receipts:last-child, .page-receipts:last-child {
-      page-break-after: auto; /* 徹底消滅最後一頁空白 */
+      page-break-after: auto; 
     }
     
     .pdf-receipt-card, .receipt-card { 
       position: relative; 
       box-sizing: border-box; 
-      border: none; /* 🌟 移除所有外邊框 🌟 */
+      border: none;
     }
     
-    /* 🌟 只留下內部的十字虛線 🌟 */
     .pdf-receipt-card:nth-child(1), .receipt-card:nth-child(1) { border-right: 1px dashed #999; border-bottom: 1px dashed #999; }
     .pdf-receipt-card:nth-child(2), .receipt-card:nth-child(2) { border-bottom: 1px dashed #999; }
     .pdf-receipt-card:nth-child(3), .receipt-card:nth-child(3) { border-right: 1px dashed #999; }
 
-    /* 絕對座標結界 */
     .pdf-receipt-inner, .receipt-inner { 
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -205,7 +208,6 @@
           <input type="text" id="modal-note" placeholder="例如: 5/15起租，單日計算">
         </div>
         
-        <!-- 🌟 新增的匯款專屬選項 🌟 -->
         <div class="input-group" style="display: flex; align-items: center; gap: 12px; background-color: #e6f2ff; padding: 15px; border-radius: 8px; border: 2px solid #b8daff;">
           <input type="checkbox" id="modal-remit" style="width: 28px; height: 28px; cursor: pointer;">
           <label for="modal-remit" style="margin: 0; font-size: 22px; font-weight: bold; color: #0056b3; cursor: pointer; flex: 1;">標記為「匯款」繳費</label>
@@ -337,16 +339,13 @@
           var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
           var displayTime = (isPaid && space.PaymentTime) ? `<span class="badge-time">🕒 ${space.PaymentTime}</span>` : "";
 
-          // 🌟 匯款標記解析 (從備註或是獨立欄位讀取) 🌟
           var rawNote = space.Note || "";
           var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
           
-          // 清理要在畫面上顯示的備註內容，把匯款字眼過濾掉
           var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
           if (cleanNote === '匯') cleanNote = ''; 
           var displayNote = cleanNote ? `<span class="badge-note" title="${cleanNote}">📝</span>` : "";
 
-          // 🌟 產生列表最左側的「匯」字徽章 🌟
           var remitBadge = isRemit ? `<span style="position: absolute; left: 12px; background-color: #007bff; color: white; padding: 3px 8px; border-radius: 6px; font-size: 16px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">匯</span>` : '';
 
           div.innerHTML = `
@@ -382,10 +381,8 @@
         return res.replace(/零$/, '');
     }
 
-    // 🌟 100% 刀刻級絕對座標：強制所有變數套用最高標楷粗體 🌟
     function buildReceiptsHTML() {
         let html = '';
-        // 不再過濾空位，保留所有車位，讓空位也能印出空白模板
         let validSpaces = globalSpaces && globalSpaces.length > 0 ? globalSpaces : [];
         
         let totalReceipts = Math.ceil(validSpaces.length / 4) * 4;
@@ -496,9 +493,6 @@
         document.head.appendChild(style);
     }
 
-    // =========================================
-    // 🖨️ 匯出 PDF：總表 (精準防溢出)
-    // =========================================
     function downloadMapPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         if (isLineBrowser()) {
@@ -600,9 +594,6 @@
         });
     }
 
-    // =========================================
-    // 🖨️ 匯出 PDF：刀刻級絕對座標收據
-    // =========================================
     function downloadReceiptsPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         if (isLineBrowser()) {
@@ -620,7 +611,6 @@
         container.innerHTML = '';
         container.appendChild(wrapper);
 
-        // 🌟 配合精準內部縮限 196x284mm，設定 5mm PDF 安全邊界 🌟
         let opt = {
           margin:       5,
           filename:     `珠靈殿收據_${currentYear}_${currentMonth}-${currentMonth+1}月.pdf`,
@@ -670,7 +660,7 @@
         document.getElementById('modal-amount').value = "3600";
         document.getElementById('modal-note').value = "";
         document.getElementById('modal-paymentTime').value = "";
-        document.getElementById('modal-remit').checked = false; // 🌟 預設不勾選匯款 🌟
+        document.getElementById('modal-remit').checked = false;
       } else {
         document.getElementById('btn-leave').style.display = 'inline-block';
         document.getElementById('btn-save').innerText = '儲存修改';
@@ -683,11 +673,10 @@
         document.getElementById('modal-amount').value = space.Amount || "";
         document.getElementById('modal-paymentTime').value = space.PaymentTime || "";
         
-        // 🌟 匯款標記還原與顯示 🌟
         var rawNote = space.Note || "";
         var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
         var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
-        if (cleanNote === '匯') cleanNote = ''; // 自動清除舊格式的匯字
+        if (cleanNote === '匯') cleanNote = ''; 
         
         document.getElementById('modal-remit').checked = isRemit;
         document.getElementById('modal-note').value = cleanNote;
@@ -720,7 +709,6 @@
       var isRemit = document.getElementById('modal-remit').checked;
       var note = document.getElementById('modal-note').value.trim();
       
-      // 🌟 無痛將匯款狀態藏入備註，完全相容原本的資料庫 🌟
       if (isRemit) {
           note = note ? `[匯款] ${note}` : `[匯款]`;
       }
@@ -739,7 +727,6 @@
     async function sendUpdateRequest(spaceId, action, name, phone, plate, amount = '', note = '', paymentTime = '', isRemit = false) {
       document.getElementById('status-msg').style.display = 'block';
       document.getElementById('status-msg').innerText = "資料同步中，請稍候...";
-      // 傳遞時順便將 remittance 放進 payload 以防未來需要
       var payload = { action: action, spaceId: spaceId, name: name, phone: phone, plate: plate, amount: amount, note: note, paymentTime: paymentTime, remittance: isRemit ? '匯' : '', period: getPeriodString(), uid: globalUserId };
       try {
         const response = await fetch(MY_GAS_URL, { redirect: "follow", method: 'POST', body: JSON.stringify(payload) });
