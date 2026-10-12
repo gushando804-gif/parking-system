@@ -37,24 +37,20 @@
     .status-unpaid { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; } 
     .status-paid { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
     
-    /* 🌟 微調卡片最小高度以容納更大的字體 🌟 */
+    /* 🌟 大字體專用高度設定 🌟 */
     .space-layout { display: flex; height: 100%; min-height: 125px; }
     .space-id { width: 25%; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 2px solid rgba(0,0,0,0.15); }
     .space-info { width: 75%; display: flex; flex-direction: column; overflow: hidden; }
     
     .space-row-top { display: flex; justify-content: space-evenly; align-items: center; padding: 4px 6px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; }
-    
-    /* 🌟 將電話列與繳費列的字體放大到 26px 🌟 */
     .space-row-middle { display: flex; justify-content: center; align-items: center; padding: 4px 6px; font-size: 26px; border-bottom: 2px solid rgba(0,0,0,0.15); flex: 1; white-space: nowrap; overflow: hidden; font-weight: bold; }
     .space-row-bottom { display: flex; justify-content: center; align-items: center; padding: 4px 6px; font-size: 26px; flex: 1; white-space: nowrap; overflow: hidden; }
     
     .info-name { font-size: 26px; font-weight: bold; }
     .info-plate { font-size: 26px; opacity: 0.8; margin-left: 26px; text-overflow: ellipsis; }
-    
-    /* 🌟 繳費金額/狀態同步放大 🌟 */
     .badge-amount { font-weight: bold; font-size: 26px; }
     .badge-time { margin-left: 8px; font-size: 16px; color: #555; }
-    .badge-note { margin-left: 8px; font-size: 20px; }
+    .badge-note { margin-left: 8px; }
     
     .phone-link { color: inherit; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 4px; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     .phone-link:active { opacity: 0.6; color: #007bff; }
@@ -69,7 +65,6 @@
       .space-row-bottom { font-size: 20px; padding: 3px; }
       .space-row-top { border-bottom: 1px solid rgba(0,0,0,0.15); padding: 3px; }
       .parking-space { border-width: 1px; border-radius: 8px; }
-      .badge-note { font-size: 16px; }
       .badge-amount { font-size: 20px; }
       .badge-time { font-size: 14px; }
     }
@@ -339,12 +334,16 @@
           var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
           var displayTime = (isPaid && space.PaymentTime) ? `<span class="badge-time">🕒 ${space.PaymentTime}</span>` : "";
 
-          var rawNote = space.Note || "";
+          // 🌟 匯款標記解析 🌟
+          var rawNote = String(space.Note || "");
           var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
           
+          // 🌟 將殘留的備註濾乾淨，避免產生亂碼框 🌟
           var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
-          if (cleanNote === '匯') cleanNote = ''; 
-          var displayNote = cleanNote ? `<span class="badge-note" title="${cleanNote}">📝</span>` : "";
+          if (cleanNote === '匯' || cleanNote === '匯款') cleanNote = ''; 
+          
+          // 🌟 改用專業保證不亂碼的「註」文字標籤 🌟
+          var displayNote = cleanNote ? `<span class="badge-note" title="${cleanNote}" style="background-color: #fff3cd; color: #856404; font-size: 16px; font-weight: bold; padding: 2px 8px; border-radius: 6px; border: 1px solid #ffeeba; margin-left: 8px; vertical-align: middle;">註</span>` : "";
 
           var remitBadge = isRemit ? `<span style="position: absolute; left: 12px; background-color: #007bff; color: white; padding: 3px 8px; border-radius: 6px; font-size: 16px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">匯</span>` : '';
 
@@ -673,10 +672,10 @@
         document.getElementById('modal-amount').value = space.Amount || "";
         document.getElementById('modal-paymentTime').value = space.PaymentTime || "";
         
-        var rawNote = space.Note || "";
+        var rawNote = String(space.Note || "");
         var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
         var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
-        if (cleanNote === '匯') cleanNote = ''; 
+        if (cleanNote === '匯' || cleanNote === '匯款') cleanNote = ''; 
         
         document.getElementById('modal-remit').checked = isRemit;
         document.getElementById('modal-note').value = cleanNote;
