@@ -237,10 +237,8 @@
     const MY_LIFF_ID = "2010181007-eMKJGt2N"; 
     const MY_GAS_URL = "https://script.google.com/macros/s/AKfycbwyi2lv8MR-FHMGWQurAWNpg0l7XbGCh_ySgijb9cxUboiqdSiiPhUE4nX5eFMV4Wniww/exec";
 
-    // 🌟 動態抓取系統當下時間 🌟
     const today = new Date();
-    let currentYear = today.getFullYear() - 1911; // 轉換為民國年
-    // 智慧換算期數：將當下月份換算成雙月區間 (1, 3, 5, 7, 9, 11)
+    let currentYear = today.getFullYear() - 1911; 
     let currentMonth = Math.floor(today.getMonth() / 2) * 2 + 1; 
 
     let globalCustomers = []; 
@@ -260,7 +258,6 @@
     }
 
     async function initAuth() {
-      // 🌟 網頁一載入，立刻將標題更新為智慧抓取的當下期數 🌟
       document.getElementById('period-title').innerText = `民國 ${currentYear}年 ${currentMonth}-${currentMonth+1}月`;
       
       try {
@@ -343,8 +340,11 @@
           var rawNote = String(space.Note || "");
           var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
           
+          // 🌟 徹底過濾並隱藏空括號 [] 🌟
           var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
-          if (cleanNote === '匯' || cleanNote === '匯款') cleanNote = ''; 
+          if (cleanNote === '匯' || cleanNote === '匯款' || cleanNote === '[]' || cleanNote === '[ ]') {
+              cleanNote = ''; 
+          }
           
           var displayNote = cleanNote ? `<span class="badge-note" title="${cleanNote}" style="background-color: #fff3cd; color: #856404; font-size: 16px; font-weight: bold; padding: 2px 8px; border-radius: 6px; border: 1px solid #ffeeba; margin-left: 8px; vertical-align: middle;">註</span>` : "";
 
@@ -677,8 +677,12 @@
         
         var rawNote = String(space.Note || "");
         var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
+        
+        // 🌟 徹底過濾隱藏殘留的空括號 🌟
         var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
-        if (cleanNote === '匯' || cleanNote === '匯款') cleanNote = ''; 
+        if (cleanNote === '匯' || cleanNote === '匯款' || cleanNote === '[]' || cleanNote === '[ ]') {
+            cleanNote = ''; 
+        }
         
         document.getElementById('modal-remit').checked = isRemit;
         document.getElementById('modal-note').value = cleanNote;
@@ -711,8 +715,11 @@
       var isRemit = document.getElementById('modal-remit').checked;
       var note = document.getElementById('modal-note').value.trim();
       
+      // 🌟 當取消勾選匯款，且備註為空時，保證寫入真正的空白字串，不留殘留物 🌟
       if (isRemit) {
           note = note ? `[匯款] ${note}` : `[匯款]`;
+      } else {
+          if (note === '[]' || note === '[ ]') note = '';
       }
       
       closeModal();
