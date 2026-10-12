@@ -150,7 +150,7 @@
 
   <div id="auth-screen">
     <h1 id="auth-title">系統驗證中...</h1>
-    <p id="auth-desc">請稍候，正在讀取您的 LINE 身分資料</p>
+    <p id="auth-desc">請稍候，系統正在檢查您的身份</p>
   </div>
 
   <div id="main-app">
@@ -275,11 +275,21 @@
       document.getElementById('period-title').innerText = `民國 ${currentYear}年 ${currentMonth}-${currentMonth+1}月`;
       
       try {
-        await liff.init({ liffId: MY_LIFF_ID });
-        if (!liff.isLoggedIn()) { liff.login(); return; }
-        const profile = await liff.getProfile();
-        globalUserId = profile.userId; 
+        // 🌟 本地記憶 (Local Storage) 神器啟動 🌟
+        globalUserId = localStorage.getItem('zl_parking_uid');
+        
+        // 如果手機還沒記住，才叫出 LINE 登入
+        if (!globalUserId) {
+            await liff.init({ liffId: MY_LIFF_ID });
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+            const profile = await liff.getProfile();
+            globalUserId = profile.userId; 
+            
+            // 登入成功後，立刻存入手機瀏覽器記憶中
+            localStorage.setItem('zl_parking_uid', globalUserId);
+        }
 
+        // 開始核對權限並載入資料
         const response = await fetch(MY_GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'login', uid: globalUserId }) });
         const result = await response.json();
 
@@ -291,6 +301,8 @@
         } else {
            document.getElementById('auth-title').innerText = "⛔ 無存取權限";
            document.getElementById('auth-desc').innerHTML = `您尚未被開通此系統的使用權限。<br>ID: <div class="uid-box">${globalUserId}</div>`;
+           // 如果權限不對，就把本機記憶刪掉免得卡死
+           localStorage.removeItem('zl_parking_uid');
         }
       } catch (err) { document.getElementById('auth-title').innerText = "連線失敗"; }
     }
@@ -549,7 +561,6 @@
 
         let mapHtml = `<div class="pdf-page-map">`;
         
-        // 🌟 總表標題下移至 top: 6% 🌟
         mapHtml += `<div style="position:absolute; top:6%; width:100%; text-align:center; font-size:36px; font-weight:bold; letter-spacing:6px; font-family:'標楷體', serif;">
                       民國 <span style="font-family:Arial, sans-serif; margin:0 12px;">${currentYear}</span> 年 <span style="font-family:Arial, sans-serif; margin:0 15px;">${currentMonth}~${currentMonth+1}</span> 月份
                     </div>`;
