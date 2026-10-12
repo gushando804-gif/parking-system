@@ -93,10 +93,10 @@
     .pdf-page-map:last-child, .page-map:last-child { page-break-after: auto; }
     .pdf-excel-map, .excel-map { width: calc(100% - 2px); margin: 1px; border-collapse: collapse; text-align: center; table-layout: fixed; }
     .pdf-excel-map td, .excel-map td { border: 1.5px solid #000; height: 26px; overflow: hidden; white-space: nowrap; word-break: break-all; font-family: "BiauKai", "標楷體", serif !important; font-weight: bold !important; }
-    /* 🌟 放大的總表字體 🌟 */
+    /* 🌟 放大的總表字體，電話字體縮小至 12.5px 防撞框 🌟 */
     .pdf-m-id, .m-id { font-size: 16px; background-color: #fff !important; font-family: Arial, sans-serif !important;}
-    .pdf-m-name, .m-name { font-size: 22px; } /* 姓名放大 */
-    .pdf-m-text, .m-text { font-size: 14px; letter-spacing: -0.5px; font-family: Arial, sans-serif !important; } /* 車牌/電話放大 */
+    .pdf-m-name, .m-name { font-size: 22px; }
+    .pdf-m-text, .m-text { font-size: 12.5px; letter-spacing: -0.6px; font-family: Arial, sans-serif !important; } 
     .pdf-right-map td, .right-map td { border: 1.5px solid #000; }
 
     /* --- 收據樣式 --- */
@@ -515,7 +515,6 @@
             return s && s.Name ? { id: s.SpaceID, name: s.Name, plate: s.LicensePlate || '&nbsp;', phone: s.Phone || '&nbsp;', isRemit: isRemit } : { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;', isRemit: false };
         };
 
-        // 🌟 總表匯字標記放大：改為 18px 🌟
         let buildIdCell = (id) => {
             let isRemit = getSpace(id).isRemit;
             let remitBadge = isRemit ? `<span style="position:absolute; top:-2px; left:1px; font-size:18px; font-family:'BiauKai', '標楷體', serif; font-weight:bold; color:#000; line-height:1;">匯</span>` : '';
@@ -561,13 +560,12 @@
         mapHtml += `<table class="pdf-excel-map pdf-right-map">`;
         rightIds.forEach(id => {
             let space = getSpace(id);
-            // 🌟 右側匯字標記同步放大 🌟
             let remitBadge = space.isRemit ? `<span style="position:absolute; top:-2px; left:1px; font-size:18px; font-family:'BiauKai', '標楷體', serif; font-weight:bold; color:#000; line-height:1;">匯</span>` : '';
             mapHtml += `<tr>
                 <td style="width:65%; text-align:center; padding:2px;">
                     <div style="font-size:18px; margin-bottom:2px; font-weight:bold;">${space.name}</div>
-                    <div style="font-size:13px; font-family:Arial, sans-serif;">${space.plate}</div>
-                    <div style="font-size:13px; font-family:Arial, sans-serif;">${space.phone}</div>
+                    <div style="font-size:12.5px; letter-spacing:-0.5px; font-family:Arial, sans-serif;">${space.plate}</div>
+                    <div style="font-size:12.5px; letter-spacing:-0.5px; font-family:Arial, sans-serif;">${space.phone}</div>
                 </td>
                 <td class="pdf-m-id" style="width:35%; vertical-align:middle; font-size:16px; letter-spacing:-0.5px; position:relative;">
                     ${remitBadge}${id}
@@ -576,7 +574,6 @@
         });
         mapHtml += `</table></div>`;
 
-        // 🌟 入口標示與樹圖示放大 🌟
         mapHtml += `<div style="position:absolute; bottom:3%; left:77%; width:10%; text-align:center;">
             <svg width="70" height="45" viewBox="0 0 80 50">
                 <polygon points="40,0 0,50 80,50" fill="white" stroke="black" stroke-width="2"/>
