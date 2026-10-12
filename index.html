@@ -93,10 +93,9 @@
     .pdf-page-map:last-child, .page-map:last-child { page-break-after: auto; }
     .pdf-excel-map, .excel-map { width: calc(100% - 2px); margin: 1px; border-collapse: collapse; text-align: center; table-layout: fixed; }
     .pdf-excel-map td, .excel-map td { border: 1.5px solid #000; height: 26px; overflow: hidden; white-space: nowrap; word-break: break-all; font-family: "BiauKai", "標楷體", serif !important; font-weight: bold !important; }
-    /* 🌟 放大的總表字體，電話字體縮小至 12.5px 防撞框 🌟 */
     .pdf-m-id, .m-id { font-size: 16px; background-color: #fff !important; font-family: Arial, sans-serif !important;}
-    .pdf-m-name, .m-name { font-size: 22px; }
-    .pdf-m-text, .m-text { font-size: 12.5px; letter-spacing: -0.6px; font-family: Arial, sans-serif !important; } 
+    .pdf-m-name, .m-name { font-size: 22px; } 
+    .pdf-m-text, .m-text { font-size: 14px; letter-spacing: -0.5px; font-family: Arial, sans-serif !important; } 
     .pdf-right-map td, .right-map td { border: 1.5px solid #000; }
 
     /* --- 收據樣式 --- */
@@ -250,6 +249,24 @@
     function getPeriodString() { return `${currentYear}_${currentMonth}-${currentMonth+1}`; }
     function isLineBrowser() { return /Line/i.test(navigator.userAgent); }
 
+    // 🌟 核心一：用於「顯示」的電話格式（移除 07 區碼） 🌟
+    function getDisplayPhone(phone) {
+        if (!phone) return '';
+        // 如果開頭是 07 或 07-，就把它拿掉
+        return phone.toString().trim().replace(/^07-?/, '');
+    }
+
+    // 🌟 核心二：用於「撥打」的電話格式（智慧補上 07 區碼） 🌟
+    function getDialPhone(phone) {
+        if (!phone) return '';
+        let p = phone.toString().trim();
+        // 如果不是 0 開頭（代表是去區碼的市話），自動在撥號時補上 07，並拿掉 dash 以確保手機不誤判
+        if (!p.startsWith('0')) {
+            p = '07' + p.replace(/-/g, '');
+        }
+        return p;
+    }
+
     function fillAmountAndTime() {
         document.getElementById('modal-amount').value = '3600';
         let now = new Date();
@@ -334,7 +351,15 @@
           
           var displayName = space.Name ? space.Name : "未填寫";
           var displayPlate = space.LicensePlate ? space.LicensePlate : "無車牌";
-          var displayPhone = space.Phone ? `<a href="tel:${space.Phone}" class="phone-link" onclick="event.stopPropagation();">${space.Phone}</a>` : "無電話";
+          
+          // 🌟 電話處理套用雙軌邏輯 🌟
+          var rawPhone = String(space.Phone || "");
+          var displayPhoneText = getDisplayPhone(rawPhone);
+          var dialPhoneUrl = getDialPhone(rawPhone);
+          
+          // 如果有電話，使用套用過撥號邏輯的 URL，以及被拔除區碼的顯示文字
+          var displayPhone = rawPhone ? `<a href="tel:${dialPhoneUrl}" class="phone-link" onclick="event.stopPropagation();">${displayPhoneText}</a>` : "無電話";
+          
           var displayAmount = isPaid ? `<span class="badge-amount" style="color: #155724;">$${space.Amount}</span>` : `<span class="badge-amount" style="color: #dc3545;">(未繳費)</span>`;
           var displayTime = (isPaid && space.PaymentTime) ? `<span class="badge-time">🕒 ${space.PaymentTime}</span>` : "";
 
@@ -508,11 +533,14 @@
         let getSpace = (id) => {
             let s = globalSpaces.find(x => x.SpaceID == id);
             let isRemit = false;
+            let displayPhone = '&nbsp;';
             if (s) {
                 let rawNote = String(s.Note || "");
                 isRemit = s.Remittance === '匯' || s.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
+                // 🌟 總表匯出的電話也套用去區碼顯示邏輯 🌟
+                displayPhone = s.Phone ? getDisplayPhone(s.Phone) : '&nbsp;';
             }
-            return s && s.Name ? { id: s.SpaceID, name: s.Name, plate: s.LicensePlate || '&nbsp;', phone: s.Phone || '&nbsp;', isRemit: isRemit } : { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;', isRemit: false };
+            return s && s.Name ? { id: s.SpaceID, name: s.Name, plate: s.LicensePlate || '&nbsp;', phone: displayPhone, isRemit: isRemit } : { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;', isRemit: false };
         };
 
         let buildIdCell = (id) => {
@@ -564,8 +592,8 @@
             mapHtml += `<tr>
                 <td style="width:65%; text-align:center; padding:2px;">
                     <div style="font-size:18px; margin-bottom:2px; font-weight:bold;">${space.name}</div>
-                    <div style="font-size:12.5px; letter-spacing:-0.5px; font-family:Arial, sans-serif;">${space.plate}</div>
-                    <div style="font-size:12.5px; letter-spacing:-0.5px; font-family:Arial, sans-serif;">${space.phone}</div>
+                    <div style="font-size:14px; letter-spacing:-0.6px; font-family:Arial, sans-serif;">${space.plate}</div>
+                    <div style="font-size:14px; letter-spacing:-0.6px; font-family:Arial, sans-serif;">${space.phone}</div>
                 </td>
                 <td class="pdf-m-id" style="width:35%; vertical-align:middle; font-size:16px; letter-spacing:-0.5px; position:relative;">
                     ${remitBadge}${id}
@@ -684,6 +712,7 @@
            if(select.options[i].value === space.Name) { select.selectedIndex = i; found = true; break; }
         }
         if(!found) { select.value = "NEW"; customName.style.display = 'block'; customName.value = space.Name; }
+        // 🌟 編輯模式下，保持顯示原本的原始號碼 (方便你確認是否有存對) 🌟
         phoneInput.value = space.Phone || ""; plateInput.value = space.LicensePlate || "";
         document.getElementById('modal-amount').value = space.Amount || "";
         document.getElementById('modal-paymentTime').value = space.PaymentTime || "";
