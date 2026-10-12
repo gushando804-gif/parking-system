@@ -494,7 +494,6 @@
         document.head.appendChild(style);
     }
 
-    // 🌟 總表繪製邏輯（已加入匯款標記判斷） 🌟
     function downloadMapPDF() {
         if (!globalSpaces || globalSpaces.length === 0) { alert("⚠️ 資料尚未載入完成！"); return; }
         if (isLineBrowser()) {
@@ -515,11 +514,11 @@
             return s && s.Name ? { id: s.SpaceID, name: s.Name, plate: s.LicensePlate || '&nbsp;', phone: s.Phone || '&nbsp;', isRemit: isRemit } : { id: id, name: '&nbsp;', plate: '&nbsp;', phone: '&nbsp;', isRemit: false };
         };
 
-        // 建立單獨的車位格子，並根據是否匯款動態加入標記
+        // 🌟 更新的車位號碼格子生成器：大字體 + 純黑字「匯」標記 🌟
         let buildIdCell = (id) => {
             let isRemit = getSpace(id).isRemit;
-            // 若為匯款，左上角蓋上藍底白字「匯」的印章
-            let remitBadge = isRemit ? `<span style="position:absolute; top:2px; left:2px; font-size:10px; font-family:'BiauKai', '標楷體', serif; background-color:#007bff; color:white; padding:1px 3px; border-radius:3px; line-height:1; letter-spacing:0;">匯</span>` : '';
+            // 拔除背景色與白字，字體放大到 14px，純黑色粗體
+            let remitBadge = isRemit ? `<span style="position:absolute; top:1px; left:2px; font-size:14px; font-family:'BiauKai', '標楷體', serif; font-weight:bold; color:#000; line-height:1;">匯</span>` : '';
             return `<td class="pdf-m-id" style="position:relative;">${remitBadge}${id}</td>`;
         };
 
@@ -562,8 +561,8 @@
         mapHtml += `<table class="pdf-excel-map pdf-right-map">`;
         rightIds.forEach(id => {
             let space = getSpace(id);
-            // 右側區塊的「匯」字標籤
-            let remitBadge = space.isRemit ? `<span style="position:absolute; top:2px; left:2px; font-size:10px; font-family:'BiauKai', '標楷體', serif; background-color:#007bff; color:white; padding:1px 3px; border-radius:3px; line-height:1; letter-spacing:0;">匯</span>` : '';
+            // 🌟 右側區塊也同步更新為大字體純黑字 🌟
+            let remitBadge = space.isRemit ? `<span style="position:absolute; top:1px; left:2px; font-size:14px; font-family:'BiauKai', '標楷體', serif; font-weight:bold; color:#000; line-height:1;">匯</span>` : '';
             mapHtml += `<tr>
                 <td style="width:65%; text-align:center; padding:2px;">
                     <div class="pdf-m-name" style="margin-bottom:2px;">${space.name}</div>
@@ -694,7 +693,6 @@
         var rawNote = String(space.Note || "");
         var isRemit = space.Remittance === '匯' || space.Remittance === true || rawNote.includes('[匯款]') || rawNote.includes('匯');
         
-        // 🌟 徹底過濾隱藏殘留的空括號 🌟
         var cleanNote = rawNote.replace(/[匯款]/g, '').trim();
         if (cleanNote === '匯' || cleanNote === '匯款' || cleanNote === '[]' || cleanNote === '[ ]') {
             cleanNote = ''; 
@@ -731,7 +729,6 @@
       var isRemit = document.getElementById('modal-remit').checked;
       var note = document.getElementById('modal-note').value.trim();
       
-      // 🌟 當取消勾選匯款，且備註為空時，保證寫入真正的空白字串，不留殘留物 🌟
       if (isRemit) {
           note = note ? `[匯款] ${note}` : `[匯款]`;
       } else {
